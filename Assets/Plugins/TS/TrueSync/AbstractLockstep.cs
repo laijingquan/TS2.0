@@ -649,9 +649,8 @@ namespace TrueSync
         /// <returns></returns>
         private SyncedData UpdateData()
 		{
-			bool flag = this.replayMode == ReplayMode.LOAD_REPLAY;
 			SyncedData result;
-			if (flag)
+			if (this.replayMode == ReplayMode.LOAD_REPLAY)
 			{
 				result = null;
 			}

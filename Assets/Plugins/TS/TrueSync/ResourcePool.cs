@@ -9,6 +9,9 @@ namespace TrueSync
 
 		protected static List<ResourcePool> resourcePoolReferences = new List<ResourcePool>();
 
+        /// <summary>
+        /// 为了方便清除引用 以便系统gc
+        /// </summary>
 		public static void CleanUpAll()
 		{
 			int i = 0;
@@ -23,6 +26,10 @@ namespace TrueSync
 
 		public abstract void ResetResourcePool();
 	}
+    /// <summary>
+    /// 就是对stack的存于取
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
 	public class ResourcePool<T> : ResourcePool
 	{
 		protected Stack<T> stack = new Stack<T>(10);
@@ -48,22 +55,19 @@ namespace TrueSync
 
 		public T GetNew()
 		{
-			bool fresh = this.fresh;
-			if (fresh)
+			if (this.fresh)
 			{
 				ResourcePool.resourcePoolReferences.Add(this);
 				this.fresh = false;
 			}
-			bool flag = this.stack.Count == 0;
-			if (flag)
+			if (this.stack.Count == 0)
 			{
 				this.stack.Push(this.NewInstance());
 			}
 			T t = this.stack.Pop();
-			bool flag2 = t is ResourcePoolItem;
-			if (flag2)
+			if (t is ResourcePoolItem)
 			{
-				((ResourcePoolItem)((object)t)).CleanUp();
+				((ResourcePoolItem)t).CleanUp();
 			}
 			return t;
 		}
