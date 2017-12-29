@@ -246,15 +246,19 @@ namespace TrueSync {
                 ProvideInputData
             );
 
-            if (ReplayRecord.replayMode == ReplayMode.LOAD_REPLAY) {
+            if (ReplayRecord.replayMode == ReplayMode.LOAD_REPLAY)
+            {
                 ReplayPicker.replayToLoad.Load();
 
                 ReplayRecord replayRecord = ReplayRecord.replayToLoad;
-                if (replayRecord == null) {
+                if (replayRecord == null)
+                {
                     Debug.LogError("Replay Record can't be loaded");
                     gameObject.SetActive(false);
                     return;
-                } else {
+                }
+                else
+                {
                     lockstep.ReplayRecord = replayRecord;
                 }
             }
@@ -265,14 +269,19 @@ namespace TrueSync {
 
             scheduler = new CoroutineScheduler(lockstep);
 
-            if (ReplayRecord.replayMode != ReplayMode.LOAD_REPLAY) {
-                if (communicator == null) {
+            if (ReplayRecord.replayMode != ReplayMode.LOAD_REPLAY)
+            {
+                if (communicator == null)
+                {
                     lockstep.AddPlayer(0, "Local_Player", true);
-                } else {
+                }
+                else
+                {
                     List<PhotonPlayer> players = new List<PhotonPlayer>(PhotonNetwork.playerList);
                     players.Sort(UnityUtils.playerComparer);
 
-                    for (int index = 0, length = players.Count; index < length; index++) {
+                    for (int index = 0, length = players.Count; index < length; index++)
+                    {
                         PhotonPlayer p = players[index];
                         lockstep.AddPlayer((byte) p.ID, p.NickName, p.IsLocal);
                     }
@@ -299,23 +308,27 @@ namespace TrueSync {
             return result;
         }
 
-        private void initBehaviors() {
+        private void initBehaviors()
+        {
             behaviorsByPlayer = new Dictionary<byte, List<TrueSyncManagedBehaviour>>();
 
             var playersEnum = lockstep.Players.GetEnumerator();
-            while (playersEnum.MoveNext()) {
+            while (playersEnum.MoveNext())
+            {
                 TSPlayer p = playersEnum.Current.Value;
 
                 List<TrueSyncManagedBehaviour> behaviorsInstatiated = new List<TrueSyncManagedBehaviour>();
 
-                for (int index = 0, length = playerPrefabs.Length; index < length; index++) {
+                for (int index = 0, length = playerPrefabs.Length; index < length; index++)
+                {
                     GameObject prefab = playerPrefabs[index];
 
                     GameObject prefabInst = Instantiate(prefab);
                     InitializeGameObject(prefabInst, prefabInst.transform.position.ToTSVector(), prefabInst.transform.rotation.ToTSQuaternion());
 
                     TrueSyncBehaviour[] behaviours = prefabInst.GetComponentsInChildren<TrueSyncBehaviour>();
-                    for (int index2 = 0, length2 = behaviours.Length; index2 < length2; index2++) {
+                    for (int index2 = 0, length2 = behaviours.Length; index2 < length2; index2++)
+                    {
                         TrueSyncBehaviour behaviour = behaviours[index2];
 
                         behaviour.owner = p.playerInfo;
@@ -719,15 +732,19 @@ namespace TrueSync {
             return new InputData();
         }
 
-        void GetLocalData(InputDataBase playerInputData) {
+        void GetLocalData(InputDataBase playerInputData)
+        {
             TrueSyncInput.CurrentInputData = (InputData) playerInputData;
 
-            if (behaviorsByPlayer.ContainsKey(playerInputData.ownerID)) {
+            if (behaviorsByPlayer.ContainsKey(playerInputData.ownerID))
+            {
                 List<TrueSyncManagedBehaviour> managedBehavioursByPlayer = behaviorsByPlayer[playerInputData.ownerID];
-                for (int index = 0, length = managedBehavioursByPlayer.Count; index < length; index++) {
+                for (int index = 0, length = managedBehavioursByPlayer.Count; index < length; index++)
+                {
                     TrueSyncManagedBehaviour bh = managedBehavioursByPlayer[index];
 
-                    if (bh != null && !bh.disabled) {
+                    if (bh != null && !bh.disabled)
+                    {
                         bh.OnSyncedInput();
                     }
                 }

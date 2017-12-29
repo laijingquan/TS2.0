@@ -34,17 +34,26 @@ namespace TrueSync
 		private const int MAX_PANIC_BEFORE_END_GAME = 5;
 
 		private const int SYNCED_INFO_BUFFER_WINDOW = 3;
-
+        /// <summary>
+        /// 所有玩家 包括本地玩家 dict存储
+        /// </summary>
 		internal Dictionary<byte, TSPlayer> players;
-
+        /// <summary>
+        /// 所有玩家 包括本地玩家 list存储
+        /// </summary>
 		internal List<TSPlayer> activePlayers;
 
 		internal List<SyncedData> auxPlayersSyncedData;
 
 		internal List<InputDataBase> auxPlayersInputData;
 
+        /// <summary>
+        /// 除去本地玩家的数组
+        /// </summary>
 		internal int[] auxActivePlayersIds;
-
+        /// <summary>
+        /// 本地玩家
+        /// </summary>
 		internal TSPlayer localPlayer;
 
 		protected TrueSyncUpdateCallback StepUpdate;
@@ -114,6 +123,9 @@ namespace TrueSync
 
 		internal static AbstractLockstep instance;
 
+        /// <summary>
+        /// 除去本地玩家的 list 一个中转容器
+        /// </summary>
 		private List<int> playersIdsAux = new List<int>();
 
 		private SyncedData[] _syncedDataCacheDrop = new SyncedData[1];
@@ -281,18 +293,15 @@ namespace TrueSync
 
 		private void Run()
 		{
-			bool flag = this.simulationState == AbstractLockstep.SimulationState.NOT_STARTED;
-			if (flag)
+			if (this.simulationState == AbstractLockstep.SimulationState.NOT_STARTED)
 			{
 				this.simulationState = AbstractLockstep.SimulationState.WAITING_PLAYERS;
 			}
 			else
 			{
-				bool flag2 = this.simulationState == AbstractLockstep.SimulationState.WAITING_PLAYERS || this.simulationState == AbstractLockstep.SimulationState.PAUSED;
-				if (flag2)
+				if (this.simulationState == AbstractLockstep.SimulationState.WAITING_PLAYERS || this.simulationState == AbstractLockstep.SimulationState.PAUSED)
 				{
-					bool flag3 = this.simulationState == AbstractLockstep.SimulationState.WAITING_PLAYERS;
-					if (flag3)
+					if (this.simulationState == AbstractLockstep.SimulationState.WAITING_PLAYERS)
 					{
 						this.OnGameStarted();
 					}
@@ -307,8 +316,7 @@ namespace TrueSync
 
 		private void Pause()
 		{
-			bool flag = this.simulationState == AbstractLockstep.SimulationState.RUNNING;
-			if (flag)
+			if (this.simulationState == AbstractLockstep.SimulationState.RUNNING)
 			{
 				this.OnGamePaused();
 				this.simulationState = AbstractLockstep.SimulationState.PAUSED;
@@ -317,12 +325,10 @@ namespace TrueSync
 
 		private void End()
 		{
-			bool flag = this.simulationState != AbstractLockstep.SimulationState.ENDED;
-			if (flag)
+			if (this.simulationState != AbstractLockstep.SimulationState.ENDED)
 			{
 				this.OnGameEnded();
-				bool flag2 = this.replayMode == ReplayMode.RECORD_REPLAY;
-				if (flag2)
+                if (this.replayMode == ReplayMode.RECORD_REPLAY)
 				{
 					ReplayRecord.SaveRecord(this.replayRecord);
 				}
@@ -473,7 +479,9 @@ namespace TrueSync
 				}
 			}
 		}
-
+        /// <summary>
+        /// 为了让auxActivePlayersIds过滤本地玩家
+        /// </summary>
 		internal void UpdateActivePlayers()
 		{
 			this.playersIdsAux.Clear();
@@ -481,10 +489,8 @@ namespace TrueSync
 			int count = this.activePlayers.Count;
 			while (i < count)
 			{
-                //bool flag = localPlayer == null || localPlayer.ID != activePlayers[i].ID;
                 //过滤了本地玩家,那么playersIdsAus存的都是除本地玩家之外的所有玩家
-                bool flag = this.localPlayer == null || this.localPlayer.ID != this.activePlayers[i].ID;
-				if (flag)
+				if (this.localPlayer == null || this.localPlayer.ID != this.activePlayers[i].ID)
 				{
 					this.playersIdsAux.Add((int)this.activePlayers[i].ID);//List
                 }
@@ -656,17 +662,16 @@ namespace TrueSync
 			}
 			else
 			{
-				SyncedData @new = SyncedData.pool.GetNew();
-				@new.Init(this.localPlayer.ID, this.ticks);
-				this.GetLocalData(@new.inputData);//调用OnSyncedInput();输入数据给到@new.inputData里面
-                this.localPlayer.AddData(@new);//数据塞给TSPlayer的controls
-                bool flag2 = this.communicator != null;
-				if (flag2)
+				SyncedData syncedData = SyncedData.pool.GetNew();
+                syncedData.Init(this.localPlayer.ID, this.ticks);
+				this.GetLocalData(syncedData.inputData);//TrueSyncManager.GetLocalData, 调用OnSyncedInput();输入数据给到@new.inputData里面
+                this.localPlayer.AddData(syncedData);//数据塞给TSPlayer的controls
+				if (this.communicator != null)
 				{
 					this.localPlayer.GetSendData(this.ticks, this._syncedDataCacheUpdateData);//从TSplayer的controls里取数据
                     this.communicator.OpRaiseEvent(SEND_CODE, SyncedData.Encode(this._syncedDataCacheUpdateData), true, this.auxActivePlayersIds);
 				}
-				result = @new;
+				result = syncedData;
 			}
 			return result;
 		}
@@ -847,8 +852,7 @@ namespace TrueSync
 				this.localPlayer.sentSyncedStart = true;
 			}
 			this.UpdateActivePlayers();
-			bool flag = this.replayMode == ReplayMode.RECORD_REPLAY;
-			if (flag)
+			if (this.replayMode == ReplayMode.RECORD_REPLAY)
 			{
 				this.replayRecord.AddPlayer(tSPlayer);
 			}

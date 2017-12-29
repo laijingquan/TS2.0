@@ -18,96 +18,115 @@ namespace TrueSync
 		{
 			StateTracker.AddTracking(this);
 			StateTracker.AddTracking(trueSyncBehavior);
-			this.trueSyncBehavior = trueSyncBehavior;
+			this.trueSyncBehavior = trueSyncBehavior;//基本是TrueSyncBehaviour
 		}
 
+        /// <summary>
+        /// 调用TrusSyncBehaviour:OnPreSyncedUpdate
+        /// </summary>
 		public void OnPreSyncedUpdate()
 		{
-			bool flag = this.trueSyncBehavior is ITrueSyncBehaviourGamePlay;
-			if (flag)
+			if (this.trueSyncBehavior is ITrueSyncBehaviourGamePlay)
 			{
 				((ITrueSyncBehaviourGamePlay)this.trueSyncBehavior).OnPreSyncedUpdate();
 			}
 		}
-
-		public void OnSyncedInput()
+        /// <summary>
+        /// 调用TrusSyncBehaviour:OnSyncedInput
+        /// </summary>
+        public void OnSyncedInput()
 		{
-			bool flag = this.trueSyncBehavior is ITrueSyncBehaviourGamePlay;
-			if (flag)
+			if (this.trueSyncBehavior is ITrueSyncBehaviourGamePlay)
 			{
 				((ITrueSyncBehaviourGamePlay)this.trueSyncBehavior).OnSyncedInput();
 			}
 		}
-
-		public void OnSyncedUpdate()
+        /// <summary>
+        /// 调用TrusSyncBehaviour:OnSyncedUpdate
+        /// </summary>
+        public void OnSyncedUpdate()
 		{
-			bool flag = this.trueSyncBehavior is ITrueSyncBehaviourGamePlay;
-			if (flag)
+			if (this.trueSyncBehavior is ITrueSyncBehaviourGamePlay)
 			{
 				((ITrueSyncBehaviourGamePlay)this.trueSyncBehavior).OnSyncedUpdate();
 			}
 		}
-
-		public void SetGameInfo(TSPlayerInfo localOwner, int numberOfPlayers)
+        /// <summary>
+        /// 调用TrusSyncBehaviour:SetGameInfo
+        /// </summary>
+        public void SetGameInfo(TSPlayerInfo localOwner, int numberOfPlayers)
 		{
 			this.trueSyncBehavior.SetGameInfo(localOwner, numberOfPlayers);
 		}
-
-		public void OnSyncedStart()
+        /// <summary>
+        /// 调用TrusSyncBehaviour:OnSyncedStart
+        /// </summary>
+        public void OnSyncedStart()
 		{
-			bool flag = this.trueSyncBehavior is ITrueSyncBehaviourCallbacks;
-			if (flag)
+			if (this.trueSyncBehavior is ITrueSyncBehaviourCallbacks)
 			{
 				((ITrueSyncBehaviourCallbacks)this.trueSyncBehavior).OnSyncedStart();
-				bool flag2 = this.localOwner.Id == this.owner.Id;
-				if (flag2)
+				if (this.localOwner.Id == this.owner.Id)
 				{
 					((ITrueSyncBehaviourCallbacks)this.trueSyncBehavior).OnSyncedStartLocalPlayer();
 				}
 			}
 		}
-
-		public void OnGamePaused()
+        /// <summary>
+        /// 调用TrusSyncBehaviour:OnGamePaused
+        /// </summary>
+        public void OnGamePaused()
 		{
-			bool flag = this.trueSyncBehavior is ITrueSyncBehaviourCallbacks;
-			if (flag)
+			if (this.trueSyncBehavior is ITrueSyncBehaviourCallbacks)
 			{
 				((ITrueSyncBehaviourCallbacks)this.trueSyncBehavior).OnGamePaused();
 			}
 		}
-
-		public void OnGameUnPaused()
+        /// <summary>
+        /// 调用TrusSyncBehaviour:OnGameUnPaused
+        /// </summary>
+        public void OnGameUnPaused()
 		{
-			bool flag = this.trueSyncBehavior is ITrueSyncBehaviourCallbacks;
-			if (flag)
+			if (this.trueSyncBehavior is ITrueSyncBehaviourCallbacks)
 			{
 				((ITrueSyncBehaviourCallbacks)this.trueSyncBehavior).OnGameUnPaused();
 			}
 		}
-
-		public void OnGameEnded()
+        /// <summary>
+        /// 调用TrusSyncBehaviour:OnGameEnded
+        /// </summary>
+        public void OnGameEnded()
 		{
-			bool flag = this.trueSyncBehavior is ITrueSyncBehaviourCallbacks;
-			if (flag)
+			if (this.trueSyncBehavior is ITrueSyncBehaviourCallbacks)
 			{
 				((ITrueSyncBehaviourCallbacks)this.trueSyncBehavior).OnGameEnded();
 			}
 		}
-
-		public void OnPlayerDisconnection(int playerId)
+        /// <summary>
+        /// 调用TrusSyncBehaviour:OnPlayerDisconnection
+        /// </summary>
+        public void OnPlayerDisconnection(int playerId)
 		{
-			bool flag = this.trueSyncBehavior is ITrueSyncBehaviourCallbacks;
-			if (flag)
+			if (this.trueSyncBehavior is ITrueSyncBehaviourCallbacks)
 			{
 				((ITrueSyncBehaviourCallbacks)this.trueSyncBehavior).OnPlayerDisconnection(playerId);
 			}
 		}
 
+        /// <summary>
+        /// 有可能反编译错误
+        /// </summary>
 		public void OnSyncedStartLocalPlayer()
 		{
 			throw new NotImplementedException();
 		}
 
+        /// <summary>
+        /// 通知每个trueSyncBehviour 有玩家掉线(TrueSyncManagedBehaviour:OnPlayerDisconnection->trueSyncBehavior.OnPlayerDisconnection)
+        /// </summary>
+        /// <param name="generalBehaviours">属于场景中的TrueSyncBehaviour</param>
+        /// <param name="behaviorsByPlayer">属于玩家的TrueSyncBehaviour</param>
+        /// <param name="playerId">掉线的玩家id</param>
 		public static void OnPlayerDisconnection(List<TrueSyncManagedBehaviour> generalBehaviours, Dictionary<byte, List<TrueSyncManagedBehaviour>> behaviorsByPlayer, byte playerId)
 		{
 			int i = 0;
@@ -131,8 +150,12 @@ namespace TrueSync
 				}
 			}
 		}
-
-		public static void OnGameStarted(List<TrueSyncManagedBehaviour> generalBehaviours, Dictionary<byte, List<TrueSyncManagedBehaviour>> behaviorsByPlayer)
+        /// <summary>
+        /// 通知每个trueSyncBehviour 游戏开始(TrueSyncManagedBehaviour:OnGameStarted->trueSyncBehavior.OnGameStarted)
+        /// </summary>
+        /// <param name="generalBehaviours">属于场景中的TrueSyncBehaviour</param>
+        /// <param name="behaviorsByPlayer">属于玩家的TrueSyncBehaviour</param>
+        public static void OnGameStarted(List<TrueSyncManagedBehaviour> generalBehaviours, Dictionary<byte, List<TrueSyncManagedBehaviour>> behaviorsByPlayer)
 		{
 			int i = 0;
 			int count = generalBehaviours.Count;
@@ -155,8 +178,12 @@ namespace TrueSync
 				}
 			}
 		}
-
-		public static void OnGamePaused(List<TrueSyncManagedBehaviour> generalBehaviours, Dictionary<byte, List<TrueSyncManagedBehaviour>> behaviorsByPlayer)
+        /// <summary>
+        /// 通知每个trueSyncBehviour 游戏暂停(TrueSyncManagedBehaviour:OnGamePaused->trueSyncBehavior.OnGamePaused)
+        /// </summary>
+        /// <param name="generalBehaviours">属于场景中的TrueSyncBehaviour</param>
+        /// <param name="behaviorsByPlayer">属于玩家的TrueSyncBehaviour</param>
+        public static void OnGamePaused(List<TrueSyncManagedBehaviour> generalBehaviours, Dictionary<byte, List<TrueSyncManagedBehaviour>> behaviorsByPlayer)
 		{
 			int i = 0;
 			int count = generalBehaviours.Count;
@@ -179,8 +206,12 @@ namespace TrueSync
 				}
 			}
 		}
-
-		public static void OnGameUnPaused(List<TrueSyncManagedBehaviour> generalBehaviours, Dictionary<byte, List<TrueSyncManagedBehaviour>> behaviorsByPlayer)
+        /// <summary>
+        /// 通知每个trueSyncBehviour 游戏取消暂停(TrueSyncManagedBehaviour:OnGameUnPaused->trueSyncBehavior.OnGameUnPaused)
+        /// </summary>
+        /// <param name="generalBehaviours">属于场景中的TrueSyncBehaviour</param>
+        /// <param name="behaviorsByPlayer">属于玩家的TrueSyncBehaviour</param>
+        public static void OnGameUnPaused(List<TrueSyncManagedBehaviour> generalBehaviours, Dictionary<byte, List<TrueSyncManagedBehaviour>> behaviorsByPlayer)
 		{
 			int i = 0;
 			int count = generalBehaviours.Count;
@@ -203,8 +234,12 @@ namespace TrueSync
 				}
 			}
 		}
-
-		public static void OnGameEnded(List<TrueSyncManagedBehaviour> generalBehaviours, Dictionary<byte, List<TrueSyncManagedBehaviour>> behaviorsByPlayer)
+        /// <summary>
+        /// 通知每个trueSyncBehviour 游戏结束(TrueSyncManagedBehaviour:OnGameEnded->trueSyncBehavior.OnGameEnded)
+        /// </summary>
+        /// <param name="generalBehaviours">属于场景中的TrueSyncBehaviour</param>
+        /// <param name="behaviorsByPlayer">属于玩家的TrueSyncBehaviour</param>
+        public static void OnGameEnded(List<TrueSyncManagedBehaviour> generalBehaviours, Dictionary<byte, List<TrueSyncManagedBehaviour>> behaviorsByPlayer)
 		{
 			int i = 0;
 			int count = generalBehaviours.Count;
