@@ -283,7 +283,7 @@ namespace TrueSync {
                     for (int index = 0, length = players.Count; index < length; index++)
                     {
                         PhotonPlayer p = players[index];
-                        lockstep.AddPlayer((byte) p.ID, p.NickName, p.IsLocal);
+                        lockstep.AddPlayer((byte) p.ID, p.NickName, p.IsLocal);//更新players activePlayers
                     }
                 }
             }
