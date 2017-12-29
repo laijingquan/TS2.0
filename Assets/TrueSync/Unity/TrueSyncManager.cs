@@ -56,6 +56,7 @@ namespace TrueSync {
         /**
          * @brief A dictionary holding a list of {@link TrueSyncBehaviour} belonging to each player.
          **/
+        //ownerID对应所拥有的TrueSyncManagedBehaviour
         private Dictionary<byte, List<TrueSyncManagedBehaviour>> behaviorsByPlayer;
 
         /**
@@ -68,6 +69,9 @@ namespace TrueSync {
          **/
         private List<TrueSyncManagedBehaviour> queuedBehaviours = new List<TrueSyncManagedBehaviour>();
 
+        /// <summary>
+        /// 一个TrueSyncBehaviour对应TrueSyncManagedBehaviour
+        /// </summary>
         private Dictionary<ITrueSyncBehaviour, TrueSyncManagedBehaviour> mapBehaviorToManagedBehavior = new Dictionary<ITrueSyncBehaviour, TrueSyncManagedBehaviour>();
 
         private FP time = 0;
@@ -289,8 +293,9 @@ namespace TrueSync {
             }
 
             TrueSyncBehaviour[] behavioursArray = FindObjectsOfType<TrueSyncBehaviour>();
-            for (int index = 0, length = behavioursArray.Length; index < length; index++) {
-                generalBehaviours.Add(NewManagedBehavior(behavioursArray[index]));
+            for (int index = 0, length = behavioursArray.Length; index < length; index++)
+            {
+                generalBehaviours.Add(NewManagedBehavior(behavioursArray[index]));//一个TruseSyncBehaviour对应TrueSyncManagedBehaviour
             }
 
             initBehaviors();
@@ -307,7 +312,9 @@ namespace TrueSync {
 
             return result;
         }
-
+        /// <summary>
+        /// 实例化该脚本上挂载的prafab,有多少个玩家就实例化多少个prefab。并配置TrusSyncMangedBehaviour到behaviorsByPlayer容器上方便管理
+        /// </summary>
         private void initBehaviors()
         {
             behaviorsByPlayer = new Dictionary<byte, List<TrueSyncManagedBehaviour>>();
@@ -324,20 +331,21 @@ namespace TrueSync {
                     GameObject prefab = playerPrefabs[index];
 
                     GameObject prefabInst = Instantiate(prefab);
+                    //初始化ICollider和TSTransform
                     InitializeGameObject(prefabInst, prefabInst.transform.position.ToTSVector(), prefabInst.transform.rotation.ToTSQuaternion());
-
+                    //查找该prafab是否有TrueSyncBehaviour脚本，如果有需要配置相应的TrueSyncManagedBehaviour
                     TrueSyncBehaviour[] behaviours = prefabInst.GetComponentsInChildren<TrueSyncBehaviour>();
                     for (int index2 = 0, length2 = behaviours.Length; index2 < length2; index2++)
                     {
                         TrueSyncBehaviour behaviour = behaviours[index2];
 
-                        behaviour.owner = p.playerInfo;
-                        behaviour.localOwner = lockstep.LocalPlayer.playerInfo;
-                        behaviour.numberOfPlayers = lockstep.Players.Count;
+                        behaviour.owner = p.playerInfo;//配置玩家信息
+                        behaviour.localOwner = lockstep.LocalPlayer.playerInfo;//配置本地玩家信息
+                        behaviour.numberOfPlayers = lockstep.Players.Count;//配置玩家人数
 
                         TrueSyncManagedBehaviour tsmb = NewManagedBehavior(behaviour);
-                        tsmb.owner = behaviour.owner;
-                        tsmb.localOwner = behaviour.localOwner;
+                        tsmb.owner = behaviour.owner;//配置玩家信息
+                        tsmb.localOwner = behaviour.localOwner;//配置本地玩家信息
 
                         behaviorsInstatiated.Add(tsmb);
                     }
