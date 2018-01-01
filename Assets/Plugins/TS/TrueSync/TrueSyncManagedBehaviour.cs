@@ -151,7 +151,7 @@ namespace TrueSync
 			}
 		}
         /// <summary>
-        /// 通知每个trueSyncBehviour 游戏开始(TrueSyncManagedBehaviour:OnGameStarted->trueSyncBehavior.OnGameStarted)
+        /// 通知每个trueSyncBehviour 游戏开始(TrueSyncManagedBehaviour:OnGameStarted->trueSyncBehavior.OnSyncedStart)
         /// </summary>
         /// <param name="generalBehaviours">属于场景中的TrueSyncBehaviour</param>
         /// <param name="behaviorsByPlayer">属于玩家的TrueSyncBehaviour</param>

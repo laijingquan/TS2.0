@@ -292,28 +292,36 @@ namespace TrueSync {
                 }
             }
 
+            //搜寻场景预先挂载的TrueSyncBehaviour脚本,为它生成TrueSyncManagedBehaviour脚本
+            //可能这部分脚本有些属于玩家 有些属于公共部分,都根据OwnerIndex来区分
             TrueSyncBehaviour[] behavioursArray = FindObjectsOfType<TrueSyncBehaviour>();
             for (int index = 0, length = behavioursArray.Length; index < length; index++)
             {
-                generalBehaviours.Add(NewManagedBehavior(behavioursArray[index]));//一个TruseSyncBehaviour对应TrueSyncManagedBehaviour
+                generalBehaviours.Add(NewManagedBehavior(behavioursArray[index]));//一个TrueSyncBehaviour对应TrueSyncManagedBehaviour
             }
 
-            initBehaviors();
-            initGeneralBehaviors(generalBehaviours, false);
+            initBehaviors();//初始化玩家prefab
+            initGeneralBehaviors(generalBehaviours, false);//公用和玩家的区分，公用分给generalBehaviours,玩家分给behaviorsByPlayer
 
             PhysicsManager.instance.OnRemoveBody(OnRemovedRigidBody);
 
             startState = StartState.BEHAVIOR_INITIALIZED;
         }
 
-        private TrueSyncManagedBehaviour NewManagedBehavior(ITrueSyncBehaviour trueSyncBehavior) {
+        /// <summary>
+        /// key:TrueSyncBehaviour value:TrueSyncManagedBehaviour
+        /// </summary>
+        /// <param name="trueSyncBehavior"></param>
+        /// <returns></returns>
+        private TrueSyncManagedBehaviour NewManagedBehavior(ITrueSyncBehaviour trueSyncBehavior)
+        {
             TrueSyncManagedBehaviour result = new TrueSyncManagedBehaviour(trueSyncBehavior);
             mapBehaviorToManagedBehavior[trueSyncBehavior] = result;
 
             return result;
         }
         /// <summary>
-        /// 实例化该脚本上挂载的prafab,有多少个玩家就实例化多少个prefab。并配置TrusSyncMangedBehaviour到behaviorsByPlayer容器上方便管理
+        /// 实例化该脚本上挂载的prafab,有多少个玩家就实例化多少个prefab,同时查找TrueSyncBehaviour脚本。并配置key:OwnerID,value:TrusSyncMangedBehaviour到behaviorsByPlayer容器上方便管理
         /// </summary>
         private void initBehaviors()
         {
@@ -355,70 +363,103 @@ namespace TrueSync {
             }
         }
 
-        private void initGeneralBehaviors(IEnumerable<TrueSyncManagedBehaviour> behaviours, bool realOwnerId) {
-            List<TSPlayer> playersList = new List<TSPlayer>(lockstep.Players.Values);
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="behaviours"></param>
+        /// <param name="realOwnerId">表示TrueSyncManagedBehaviour的owner是否配置了</param>
+        private void initGeneralBehaviors(IEnumerable<TrueSyncManagedBehaviour> behaviours, bool realOwnerId)
+        {
+            List<TSPlayer> playersList = new List<TSPlayer>(lockstep.Players.Values);//拷贝一份playerList 个人觉得不用拷贝
             List<TrueSyncManagedBehaviour> itemsToRemove = new List<TrueSyncManagedBehaviour>();
 
             var behavioursEnum = behaviours.GetEnumerator();
-            while (behavioursEnum.MoveNext()) {
+            while (behavioursEnum.MoveNext())
+            {
                 TrueSyncManagedBehaviour tsmb = behavioursEnum.Current;
 
-                if (!(tsmb.trueSyncBehavior is TrueSyncBehaviour)) {
+                if (!(tsmb.trueSyncBehavior is TrueSyncBehaviour))
+                {
                     continue;
                 }
 
                 TrueSyncBehaviour bh = (TrueSyncBehaviour)tsmb.trueSyncBehavior;
-
-                if (realOwnerId) {
+                //TrueSyncBehaviour已经被分配好owner了
+                if (realOwnerId)
+                {
                     bh.ownerIndex = bh.owner.Id;
-                } else {
-                    if (bh.ownerIndex >= 0 && bh.ownerIndex < playersList.Count) {
+                }
+                //根据ownerIndex去找匹配的玩家OwnerID
+                else
+                {
+                    if (bh.ownerIndex >= 0 && bh.ownerIndex < playersList.Count)
+                    {
                         bh.ownerIndex = playersList[bh.ownerIndex].ID;
                     }
                 }
 
-                if (behaviorsByPlayer.ContainsKey((byte)bh.ownerIndex)) {
+                //如果找到相应的玩家ID,配置owner
+                if (behaviorsByPlayer.ContainsKey((byte)bh.ownerIndex))
+                {
                     bh.owner = lockstep.Players[(byte)bh.ownerIndex].playerInfo;
 
                     behaviorsByPlayer[(byte)bh.ownerIndex].Add(tsmb);
                     itemsToRemove.Add(tsmb);
-                } else {
+                }
+                //没有匹配玩家,那么就是属于公用
+                else
+                {
                     bh.ownerIndex = -1;
                 }
 
                 bh.localOwner = lockstep.LocalPlayer.playerInfo;
                 bh.numberOfPlayers = lockstep.Players.Count;
 
-                tsmb.owner = bh.owner;
+                tsmb.owner = bh.owner;//有可能Owner为空
                 tsmb.localOwner = bh.localOwner;
             }
 
-            for (int index = 0, length = itemsToRemove.Count; index < length; index++) {
+            //如果收集到玩家的TrueSyncManagedBehaviour,那么就从公用容器移除掉
+            for (int index = 0, length = itemsToRemove.Count; index < length; index++)
+            {
                 generalBehaviours.Remove(itemsToRemove[index]);
             }
         }
 
-        private void CheckQueuedBehaviours() {
-            if (queuedBehaviours.Count > 0) {
+        /// <summary>
+        /// 要想在中途添加需要实时同步的对象（不管是玩家的，还是公用的）是需要先加入等待队列,要遵守帧同步的生命周期
+        /// </summary>
+        private void CheckQueuedBehaviours()
+        {
+            if (queuedBehaviours.Count > 0)
+            {
                 generalBehaviours.AddRange(queuedBehaviours);
                 initGeneralBehaviors(queuedBehaviours, true);
 
-                for (int index = 0, length = queuedBehaviours.Count; index < length; index++) {
+                for (int index = 0, length = queuedBehaviours.Count; index < length; index++)
+                {
                     TrueSyncManagedBehaviour tsmb = queuedBehaviours[index];
 
                     tsmb.SetGameInfo(lockstep.LocalPlayer.playerInfo, lockstep.Players.Count);
-                    tsmb.OnSyncedStart();
+                    tsmb.OnSyncedStart();//
                 }
 
                 queuedBehaviours.Clear();
             }
         }
-
-        void Update() {
-            if (lockstep != null && startState != StartState.STARTED) {
-                if (startState == StartState.BEHAVIOR_INITIALIZED) {
+        //TrueSyncManager的状态:StartState.BEHAVIOR_INITIALIZED->StartState.FIRST_UPDATE->StartState.STARTED
+        void Update()
+        {
+            if (lockstep != null && startState != StartState.STARTED)
+            {
+                if (startState == StartState.BEHAVIOR_INITIALIZED)
+                {
                     startState = StartState.FIRST_UPDATE;
-                } else if (startState == StartState.FIRST_UPDATE) {
+                }
+                else if (startState == StartState.FIRST_UPDATE)
+                {
+                    //相当于执行了一次lockstep.Run()把lockstep的状态this.simulationState = AbstractLockstep.SimulationState.WAITING_PLAYERS
+                    //lockstep.Update检测到WAITING_PLAYERS状态就执行CheckGameStart
                     lockstep.RunSimulation(true);
                     startState = StartState.STARTED;
                 }
@@ -739,7 +780,10 @@ namespace TrueSync {
         InputDataBase ProvideInputData() {
             return new InputData();
         }
-
+        /// <summary>
+        /// 关注OnSyncedInput的实现,TrueSyncInput.CurrentInputData会被用到
+        /// </summary>
+        /// <param name="playerInputData"></param>
         void GetLocalData(InputDataBase playerInputData)
         {
             TrueSyncInput.CurrentInputData = (InputData) playerInputData;

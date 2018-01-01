@@ -260,7 +260,10 @@ namespace TrueSync
 			this.playersDisconnect = new Dictionary<int, List<byte>>();
 			this.ReplayMode = ReplayRecord.replayMode;
 		}
-
+        /// <summary>
+        /// this.ticks - this.syncWindow;syncWindow可以理解为缓存窗口,一直让本地预先缓存一下远端过来的数据，让数据更加平滑
+        /// </summary>
+        /// <returns></returns>
 		protected int GetSyncedDataTick()
 		{
 			return this.ticks - this.syncWindow;
@@ -335,7 +338,9 @@ namespace TrueSync
 				this.simulationState = AbstractLockstep.SimulationState.ENDED;
 			}
 		}
-
+        /// <summary>
+        /// TrueSyncBehaviour:FixedUpdate()调过来的
+        /// </summary>
 		public void Update()
 		{
             //当本地玩家已经处于等待其他玩家的状态,那么久应该去检测其他玩家是否已经准备好了
@@ -376,6 +381,7 @@ namespace TrueSync
 						this.compoundStats.Increment("simulated_frames");//simulate_frames++;
                         this.UpdateData();//收集本地输入，通过服务器发送给其他玩家
                         this.elapsedPanicTicks = 0;
+                        //对于defaultLookStep refTick==syncedDataTick
 						int refTick = this.GetRefTick(syncedDataTick);//对于defaultLookStep,直接返回syncedDataTick
                         //每100tick做一次刚体同步校验
                         if (refTick > 1 && refTick % 100 == 0)
@@ -383,20 +389,22 @@ namespace TrueSync
 							this.SendInfoChecksum(refTick);
 						}
 						this._lastSafeTick = refTick;
-						this.BeforeStepUpdate(syncedDataTick, refTick);
+						this.BeforeStepUpdate(syncedDataTick, refTick);//去除无用Body,和断线的玩家
 						List<SyncedData> tickData = this.GetTickData(syncedDataTick);//获取所有玩家在该syncedDataTick下的输入数据
                         this.ExecutePhysicsStep(tickData, syncedDataTick);
 						if (this.replayMode == ReplayMode.RECORD_REPLAY)
 						{
 							this.replayRecord.AddSyncedData(this.GetTickData(refTick));
                         }
-						this.AfterStepUpdate(syncedDataTick, refTick);//从TSPlayer.controls清除该refTick的数据
+						this.AfterStepUpdate(syncedDataTick, refTick);//从TSPlayer.controls清除该refTick的数据,用Pool回收
                         this.ticks++;
 					}
 					else
 					{
+                        //当tciks大于了某个界限还没收到远端的数据，那么我们定义为missed_frames
 						if (this.ticks >= this.totalWindow)
 						{
+                            //LOAD_REPLAY模式直接结束游戏
 							if (this.replayMode == ReplayMode.LOAD_REPLAY)
 							{
 								this.End();
@@ -405,13 +413,16 @@ namespace TrueSync
 							{
 								this.compoundStats.Increment("missed_frames");
 								this.elapsedPanicTicks++;
+                                //意思是说missed_frames大于预设的panicWindow
 								if (this.elapsedPanicTicks > this.panicWindow)
 								{
 									this.compoundStats.Increment("panic");
-									if (this.compoundStats.globalStats.GetInfo("panic").count >= 5L)
+                                    //missed_frames大于预设的panicWindow的情况出现超过五次,那么直接结束游戏
+                                    if (this.compoundStats.globalStats.GetInfo("panic").count >= 5L)
 									{
 										this.End();
 									}
+                                    //
 									else
 									{
 										this.elapsedPanicTicks = 0;
@@ -432,19 +443,21 @@ namespace TrueSync
 			}
 		}
 
+        /// <summary>
+        /// 暂时没注册，必定返回true
+        /// </summary>
+        /// <returns></returns>
 		private bool CheckGameIsReady()
 		{
-			bool flag = this.GameIsReady != null;
 			bool result;
-			if (flag)
+			if (this.GameIsReady != null)
 			{
 				Delegate[] invocationList = this.GameIsReady.GetInvocationList();
 				for (int i = 0; i < invocationList.Length; i++)
 				{
 					Delegate @delegate = invocationList[i];
-					bool flag2 = (bool)@delegate.DynamicInvoke(new object[0]);
-					bool flag3 = !flag2;
-					if (flag3)
+					bool flag = (bool)@delegate.DynamicInvoke(new object[0]);
+					if (!flag)
 					{
 						result = false;
 						return result;
@@ -501,24 +514,23 @@ namespace TrueSync
 
 		private void CheckGameStart()
 		{
-			bool flag = this.replayMode == ReplayMode.LOAD_REPLAY;
-			if (flag)
+            //默认是ReplayMode.NO_REPLAY
+            if (this.replayMode == ReplayMode.LOAD_REPLAY)
 			{
 				this.RunSimulation(false);
 			}
 			else
             { //检测所有玩家是否已经准备好了
-                bool flag2 = true;
+                bool flag = true;
 				int i = 0;
 				int count = this.activePlayers.Count;
 				while (i < count)
 				{
-					flag2 &= this.activePlayers[i].sentSyncedStart;
+					flag &= this.activePlayers[i].sentSyncedStart;
 					i++;
 				}
                 //所有玩家已经准备好了
-                bool flag3 = flag2;
-				if (flag3)
+				if (flag)
 				{
 					this.RunSimulation(false);
 					SyncedData.pool.FillStack(this.activePlayers.Count * (this.syncWindow + this.rollbackWindow));
@@ -549,16 +561,15 @@ namespace TrueSync
 		public void PauseSimulation()
 		{
 			this.Pause();
-			this.RaiseEvent(SIMULATION_CODE, new byte[1], true, this.auxActivePlayersIds);
-		}
+			this.RaiseEvent(SIMULATION_CODE, new byte[1], true, this.auxActivePlayersIds);//content:0
+        }
 
 		public void RunSimulation(bool firstRun)
 		{
 			this.Run();
             //bool flag = !firstRun;
             //firstRun=true的时候 不给其他玩家发送消息,auxActivePlayersIds存的都是除了本地玩家之外的所有玩家id
-            bool flag = !firstRun;
-			if (flag)
+			if (!firstRun)
 			{
 				this.RaiseEvent(SIMULATION_CODE, new byte[]
 				{
@@ -590,8 +601,7 @@ namespace TrueSync
 
 		protected void CheckSafeRemotion(int refTick)
 		{
-			bool flag = this.bodiesToDestroy.ContainsKey(refTick);
-			if (flag)
+			if (this.bodiesToDestroy.ContainsKey(refTick))
 			{
 				List<IBody> list = this.bodiesToDestroy[refTick];
 				foreach (IBody current in list)
@@ -604,8 +614,7 @@ namespace TrueSync
 				}
 				this.bodiesToDestroy.Remove(refTick);
 			}
-			bool flag2 = this.playersDisconnect.ContainsKey(refTick);
-			if (flag2)
+			if (this.playersDisconnect.ContainsKey(refTick))
 			{
 				this.playersDisconnect.Remove(refTick);
 			}
@@ -616,17 +625,15 @@ namespace TrueSync
         private void DropLagPlayers()
 		{
 			List<TSPlayer> list = new List<TSPlayer>();
-			int refTick = this.GetRefTick(this.GetSyncedDataTick());
-			bool flag = refTick >= 0;
-			if (flag)
+			int refTick = this.GetRefTick(this.GetSyncedDataTick());//对于defaultLookStep,直接返回syncedDataTick
+			if (refTick >= 0)
 			{
 				int i = 0;
 				int count = this.activePlayers.Count;
 				while (i < count)
 				{
 					TSPlayer tSPlayer = this.activePlayers[i];
-					bool flag2 = !tSPlayer.IsDataReady(refTick);
-					if (flag2)
+					if (!tSPlayer.IsDataReady(refTick))
 					{
 						tSPlayer.dropCount++;
 						list.Add(tSPlayer);
@@ -664,11 +671,13 @@ namespace TrueSync
 			{
 				SyncedData syncedData = SyncedData.pool.GetNew();
                 syncedData.Init(this.localPlayer.ID, this.ticks);
-				this.GetLocalData(syncedData.inputData);//TrueSyncManager.GetLocalData, 调用OnSyncedInput();输入数据给到@new.inputData里面
+				this.GetLocalData(syncedData.inputData);//TrueSyncManager.GetLocalData, 调用OnSyncedInput();
                 this.localPlayer.AddData(syncedData);//数据塞给TSPlayer的controls
 				if (this.communicator != null)
 				{
-					this.localPlayer.GetSendData(this.ticks, this._syncedDataCacheUpdateData);//从TSplayer的controls里取数据
+                    //因为_syncedDataCacheUpdateData只有一个,所以只获取了一个SyncedData
+                    this.localPlayer.GetSendData(this.ticks, this._syncedDataCacheUpdateData);//从TSplayer的controls里取数据
+                    //把本地玩家的输入数据发给远端玩家
                     this.communicator.OpRaiseEvent(SEND_CODE, SyncedData.Encode(this._syncedDataCacheUpdateData), true, this.auxActivePlayersIds);
 				}
 				result = syncedData;
@@ -714,25 +723,20 @@ namespace TrueSync
 
 		private void OnEventDataReceived(byte eventCode, object content)
 		{
-			bool flag = eventCode == SEND_CODE;
-			if (flag)
+			if (eventCode == SEND_CODE)
 			{
 				byte[] data = content as byte[];
 				List<SyncedData> list = SyncedData.Decode(data);//只有list[0]是携带玩家ownerID数据,剩余的list都是该玩家的数据
-                bool flag2 = list.Count > 0;
-				if (flag2)
+				if (list.Count > 0)
 				{
 					TSPlayer tSPlayer = this.players[list[0].inputData.ownerID];
-					bool flag3 = !tSPlayer.dropped;
-					if (flag3)
+					if (!tSPlayer.dropped)
 					{
-						this.OnSyncedDataReceived(tSPlayer, list);//调用TSPlayer.addData添加数据
+						this.OnSyncedDataReceived(tSPlayer, list);//调用TSPlayer.controls添加数据
                         //满足三个条件,dropCount才可以增加
                         //网络数据的dropPlayer必须为true,网络过来的玩家不是本地玩家，提取网络数据中的dropFromPlayerId，查找players,其对应的dropped为false
                         //这里有dropPlayer dropped dropFromPlayerId 需要理解区分
-
-                        bool flag4 = list[0].dropPlayer && tSPlayer.ID != this.localPlayer.ID && !this.players[list[0].dropFromPlayerId].dropped;
-						if (flag4)
+						if (list[0].dropPlayer && tSPlayer.ID != this.localPlayer.ID && !this.players[list[0].dropFromPlayerId].dropped)
 						{
 							tSPlayer.dropCount++;
 						}
@@ -760,40 +764,31 @@ namespace TrueSync
 				}
 				else
 				{
-					bool flag6 = eventCode == SIMULATION_CODE;
-					if (flag6)
+                    //197事件，内容只有3种：0:pause,1:Run,3:End
+					if (eventCode == SIMULATION_CODE)
 					{
 						byte[] array = content as byte[];
-						bool flag7 = array.Length != 0;
-						if (flag7)
+						if (array.Length != 0)
 						{
-							bool flag8 = array[0] == 0;
-							if (flag8)
-							{
-								this.Pause();
-							}
-							else
-							{
-								bool flag9 = array[0] == 1;
-								if (flag9)
-								{
-									this.Run();
-								}
-								else
-								{
-									bool flag10 = array[0] == 3;
-									if (flag10)
-									{
-										this.End();
-									}
-								}
-							}
-						}
+                            switch (array[0])
+                            {
+                                case 0:
+                                    this.Pause();
+                                    break;
+                                case 1:
+                                    Run();
+                                    break;
+                                case 3:
+                                    End();
+                                    break;
+                            }
+                        }
 					}
+                    //196事件 远程玩家准备好事件
 					else
 					{
-						bool flag11 = eventCode == SYNCED_GAME_START_CODE;
-						if (flag11)
+                        //远程玩家准备好事件
+						if (eventCode == SYNCED_GAME_START_CODE)
 						{
 							byte[] infoBytes2 = content as byte[];
 							SyncedInfo syncedInfo = SyncedInfo.Decode(infoBytes2);
@@ -877,8 +872,7 @@ namespace TrueSync
 					this.UpdateActivePlayers();
 					Debug.Log("Player dropped (stopped sending input)");
 					int key = this.GetSyncedDataTick() + 1;//下一帧为掉线玩家
-                    bool flag3 = !this.playersDisconnect.ContainsKey(key);
-					if (flag3)
+					if (!this.playersDisconnect.ContainsKey(key))
 					{
 						this.playersDisconnect[key] = new List<byte>();
 					}

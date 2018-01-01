@@ -27,6 +27,9 @@ namespace TrueSync
         /// </summary>
 		public int tick;
 
+        /// <summary>
+        /// fake英文释义为:伪造
+        /// </summary>
 		[NonSerialized]
 		public bool fake;
 
@@ -36,6 +39,9 @@ namespace TrueSync
 		[NonSerialized]
 		public bool dropPlayer;
 
+        /// <summary>
+        /// 本机来说他是localID,对于远端数据来说，他是远端玩家Id
+        /// </summary>
 		[NonSerialized]
 		public byte dropFromPlayerId;
 

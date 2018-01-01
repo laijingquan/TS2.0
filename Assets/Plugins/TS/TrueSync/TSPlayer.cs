@@ -16,8 +16,11 @@ namespace TrueSync
 		[NonSerialized]
 		public bool dropped;
 
+        /// <summary>
+        /// 相当于玩家是否已经准备好了标志，本地玩家是否准备好是可以直接知道的，远程玩家是要远端发来准备好的消息
+        /// </summary>
 		[NonSerialized]
-		public bool sentSyncedStart;
+        public bool sentSyncedStart;
 
 		[SerializeField]
 		internal SerializableDictionaryIntSyncedData controls;
@@ -40,6 +43,11 @@ namespace TrueSync
 			this.controls = new SerializableDictionaryIntSyncedData();
 		}
 
+        /// <summary>
+        /// 有数据并且不是伪造的
+        /// </summary>
+        /// <param name="tick"></param>
+        /// <returns></returns>
 		public bool IsDataReady(int tick)
 		{
 			return this.controls.ContainsKey(tick) && !this.controls[tick].fake;
@@ -53,23 +61,24 @@ namespace TrueSync
 
 		public SyncedData GetData(int tick)
 		{
-			bool flag = !this.controls.ContainsKey(tick);
 			SyncedData result;
-			if (flag)
+            //判断当前tick是否能在controls里找到
+			if (!this.controls.ContainsKey(tick))
 			{
-				bool flag2 = this.controls.ContainsKey(tick - 1);
 				SyncedData syncedData;
-				if (flag2)
+                //如果没找到,那么尝试找上一个tick
+				if (this.controls.ContainsKey(tick - 1))
 				{
-					syncedData = this.controls[tick - 1].clone();
+					syncedData = this.controls[tick - 1].clone();//深拷贝一份数据出来
 					syncedData.tick = tick;
 				}
+                //如果连上一个tick都没找到,那么就从缓存池里尝试去取出一个新的初始化ID和tick
 				else
 				{
 					syncedData = SyncedData.pool.GetNew();
 					syncedData.Init(this.ID, tick);
 				}
-				syncedData.fake = true;
+				syncedData.fake = true;//伪造标志为true,证明该数据为是伪造的
 				this.controls[tick] = syncedData;
 				result = syncedData;
 			}
@@ -80,11 +89,14 @@ namespace TrueSync
 			return result;
 		}
 
+        /// <summary>
+        /// 如果controls含有该key,那么就添加到SyncedDataPool相当于被回收了,没有该key那么就添加到controls
+        /// </summary>
+        /// <param name="data"></param>
 		public void AddData(SyncedData data)
 		{
 			int tick = data.tick;
-			bool flag = this.controls.ContainsKey(tick);
-			if (flag)
+			if (this.controls.ContainsKey(tick))
 			{
 				SyncedData.pool.GiveBack(data);
 			}
@@ -169,16 +181,15 @@ namespace TrueSync
 
 		public bool GetSendDataForDrop(byte fromPlayerId, SyncedData[] sendWindowArray)
 		{
-			bool flag = this.controls.Count == 0;
 			bool result;
-			if (flag)
+			if (this.controls.Count == 0)
 			{
 				result = false;
 			}
 			else
 			{
 				this.GetDataFromTick(this.lastTick, sendWindowArray);
-				sendWindowArray[0] = sendWindowArray[0].clone();
+				sendWindowArray[0] = sendWindowArray[0].clone();//不影响controls里面的数据,这里深拷贝一份出来
 				sendWindowArray[0].dropFromPlayerId = fromPlayerId;
 				sendWindowArray[0].dropPlayer = true;
 				result = true;
@@ -191,6 +202,11 @@ namespace TrueSync
 			this.GetDataFromTick(tick, sendWindowArray);
 		}
 
+        /// <summary>
+        /// 因为sendWindowArray容量为1,所以就获取到一个SyncedData数据
+        /// </summary>
+        /// <param name="tick"></param>
+        /// <param name="sendWindowArray"></param>
 		private void GetDataFromTick(int tick, SyncedData[] sendWindowArray)
 		{
 			for (int i = 0; i < sendWindowArray.Length; i++)
