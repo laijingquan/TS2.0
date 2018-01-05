@@ -40,7 +40,7 @@ public class GoalBehavior : TrueSyncBehaviour {
     * @brief When a ball hits this goal the score is updated and a 'GoalScored' is triggered.
     **/
     public void OnSyncedTriggerEnter(TSCollision2D otherBody) {
-        if (otherBody.gameObject.tag == "ball") {
+        if (otherBody.gameObject.name == "Ball") {
             score++;
             UpdateScore();
             otherBody.gameObject.SendMessage("GoalScored");

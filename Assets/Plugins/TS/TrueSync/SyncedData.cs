@@ -41,6 +41,7 @@ namespace TrueSync
 
         /// <summary>
         /// 本机来说他是localID,对于远端数据来说，他是远端玩家Id
+        /// 可以理解为是谁判断了玩家掉线，需要发送给其他远端玩家知道
         /// </summary>
 		[NonSerialized]
 		public byte dropFromPlayerId;

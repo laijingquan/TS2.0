@@ -376,10 +376,10 @@ namespace TrueSync
 						i++;
 					}
 					int syncedDataTick = this.GetSyncedDataTick();//syncedDataTick指向的是缓存队列的第一个
-                    if (this.CheckGameIsReady() && this.IsStepReady(syncedDataTick))
-					{
+                    if (this.CheckGameIsReady() && this.IsStepReady(syncedDataTick)) //相当于是询问所有玩家的controls是否有数据，this.activePlayers[i].IsDataReady(syncedDataTick));
+                    {
 						this.compoundStats.Increment("simulated_frames");//simulate_frames++;
-                        this.UpdateData();//收集本地输入，通过服务器发送给其他玩家
+                        this.UpdateData();//收集本地输入，通过服务器发送给远端玩家
                         this.elapsedPanicTicks = 0;
                         //对于defaultLookStep refTick==syncedDataTick
 						int refTick = this.GetRefTick(syncedDataTick);//对于defaultLookStep,直接返回syncedDataTick
@@ -401,7 +401,7 @@ namespace TrueSync
 					}
 					else
 					{
-                        //当tciks大于了某个界限还没收到远端的数据，那么我们定义为missed_frames
+                        //当ticks大于了某个界限还没收到远端的数据，那么我们定义为missed_frames
 						if (this.ticks >= this.totalWindow)
 						{
                             //LOAD_REPLAY模式直接结束游戏
@@ -471,8 +471,8 @@ namespace TrueSync
 		protected void ExecutePhysicsStep(List<SyncedData> data, int syncedDataTick)
 		{
 			this.ExecuteDelegates(syncedDataTick);
-			this.SyncedArrayToInputArray(data);//data塞到auxPlayersInputData
-            this.StepUpdate(this.auxPlayersInputData);//TrueSyncManager.OnStepUpdate
+			this.SyncedArrayToInputArray(data);//data塞到auxPlayersInputData以便StepUpdate有数据分发给所有的TrueSyncBehaviour
+            this.StepUpdate(this.auxPlayersInputData);//TrueSyncManager.OnStepUpdate->所有的TrueSyncBehaviour.OnStepUpdate
             this.physicsManager.UpdateStep();
 		}
 
@@ -646,7 +646,7 @@ namespace TrueSync
 			while (j < count2)
 			{
 				TSPlayer p = list[j];
-				this.CheckDrop(p);
+				this.CheckDrop(p);//查看远端玩家是否掉线
 				bool sendDataForDrop = list[j].GetSendDataForDrop(this.localPlayer.ID, this._syncedDataCacheDrop);
 				if (sendDataForDrop)
 				{
@@ -727,8 +727,10 @@ namespace TrueSync
 			{
 				byte[] data = content as byte[];
 				List<SyncedData> list = SyncedData.Decode(data);//只有list[0]是携带玩家ownerID数据,剩余的list都是该玩家的数据
-				if (list.Count > 0)
+                //注意list是网络数据
+                if (list.Count > 0)
 				{
+                    //tSPlayer是本地数据，是需要和根据网络数据同步的
 					TSPlayer tSPlayer = this.players[list[0].inputData.ownerID];
 					if (!tSPlayer.dropped)
 					{
@@ -864,6 +866,7 @@ namespace TrueSync
 			{
 				int num = this.activePlayers.Count - 1;
                 //如果dropCount>=玩家数量,那么就认为该玩家掉线了,
+                //如果有五个玩家,dropCount至少是4因为只有其他4个玩家都没收到该玩家的数据，才是真的掉线了。
                 if (p.dropCount >= num)
 				{
 					this.compoundStats.globalStats.GetInfo("panic").count = 0L;

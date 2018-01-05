@@ -190,8 +190,8 @@ namespace TrueSync
 			{
 				this.GetDataFromTick(this.lastTick, sendWindowArray);
 				sendWindowArray[0] = sendWindowArray[0].clone();//不影响controls里面的数据,这里深拷贝一份出来
-				sendWindowArray[0].dropFromPlayerId = fromPlayerId;
-				sendWindowArray[0].dropPlayer = true;
+				sendWindowArray[0].dropFromPlayerId = fromPlayerId; //可以理解为是谁判断了玩家掉线，需要发送给其他远端玩家知道
+                 sendWindowArray[0].dropPlayer = true;
 				result = true;
 			}
 			return result;

@@ -3,6 +3,7 @@ using System.Collections;
 
 public class TutorialMenu : Photon.PunBehaviour {
 
+    public int levelid = 0;
 	// Use this for initialization
 	void Start ()
     {
@@ -20,7 +21,8 @@ public class TutorialMenu : Photon.PunBehaviour {
         GUI.Label(new Rect(10, 10, 100, 30), "players:" + PhotonNetwork.playerList.Length);
         if (PhotonNetwork.isMasterClient && GUI.Button(new Rect(10, 40, 100, 30), "start"))
         {
-            PhotonNetwork.LoadLevel("Demo/MyDemo/Run");
+            PhotonNetwork.LoadLevel(levelid);
+            //PhotonNetwork.LoadLevel("Demo/MyDemo/Run");
         }
     }
 }
