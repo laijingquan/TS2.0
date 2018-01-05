@@ -379,7 +379,7 @@ namespace TrueSync
                     if (this.CheckGameIsReady() && this.IsStepReady(syncedDataTick)) //相当于是询问所有玩家的controls是否有数据，this.activePlayers[i].IsDataReady(syncedDataTick));
                     {
 						this.compoundStats.Increment("simulated_frames");//simulate_frames++;
-                        this.UpdateData();//收集本地输入，通过服务器发送给远端玩家
+                        this.UpdateData();//收集本地玩家的输入，并通过服务器发送给其他玩家
                         this.elapsedPanicTicks = 0;
                         //对于defaultLookStep refTick==syncedDataTick
 						int refTick = this.GetRefTick(syncedDataTick);//对于defaultLookStep,直接返回syncedDataTick
@@ -657,7 +657,7 @@ namespace TrueSync
 			}
 		}
         /// <summary>
-        /// 收集本地输入，通过服务器发送给其他玩家
+        /// 收集本地玩家的输入，并通过服务器发送给其他玩家
         /// </summary>
         /// <returns></returns>
         private SyncedData UpdateData()
@@ -672,7 +672,7 @@ namespace TrueSync
 				SyncedData syncedData = SyncedData.pool.GetNew();
                 syncedData.Init(this.localPlayer.ID, this.ticks);
 				this.GetLocalData(syncedData.inputData);//TrueSyncManager.GetLocalData, 调用OnSyncedInput();
-                this.localPlayer.AddData(syncedData);//数据塞给TSPlayer的controls
+                this.localPlayer.AddData(syncedData);//本地数据直接塞给本地玩家，下面还需要把本地数据发送给远端
 				if (this.communicator != null)
 				{
                     //因为_syncedDataCacheUpdateData只有一个,所以只获取了一个SyncedData
