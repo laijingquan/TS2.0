@@ -56,6 +56,7 @@ namespace TrueSync
         /// </summary>
 		internal TSPlayer localPlayer;
 
+        //提供lockstep各个生命周期的委托（这里是TrueSyncMangaer对象监听了lockstep的各个生命周期）
 		protected TrueSyncUpdateCallback StepUpdate;
 
 		private TrueSyncInputCallback GetLocalData;
@@ -720,7 +721,11 @@ namespace TrueSync
 				this.communicator.OpRaiseEvent(eventCode, message, reliable, toPlayers);
 			}
 		}
-
+        /// <summary>
+        /// 接收网络数据
+        /// </summary>
+        /// <param name="eventCode"></param>
+        /// <param name="content"></param>
 		private void OnEventDataReceived(byte eventCode, object content)
 		{
 			if (eventCode == SEND_CODE)

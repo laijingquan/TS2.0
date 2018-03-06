@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace TrueSync {
     /**
-     * @brief Manages creation of player prefabs and lockstep execution.
+     * @brief Manages creation of player prefabs and lockstep execution. 管理player的创建 和 lockstep的执行
      **/
     [AddComponentMenu("")]
     public class TrueSyncManager : MonoBehaviour {

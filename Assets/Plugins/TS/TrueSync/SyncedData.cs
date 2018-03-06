@@ -46,12 +46,15 @@ namespace TrueSync
 		[NonSerialized]
 		public byte dropFromPlayerId;
 
+        /// <summary>
+        /// 用于编码的临时字节
+        /// </summary>
 		private static List<byte> bytesToEncode = new List<byte>();
 
 		public SyncedData()
 		{
-			this.inputData = AbstractLockstep.instance.InputDataProvider();
-		}
+			this.inputData = AbstractLockstep.instance.InputDataProvider();//TrueSyncManager：ProvideInputData{new InputData}
+        }
 
 		public void Init(byte ownerID, int tick)
 		{
