@@ -33,6 +33,9 @@ namespace TrueSync
 		[NonSerialized]
 		public bool fake;
 
+        /// <summary>
+        /// 回放模式才用到 暂时忽略
+        /// </summary>
 		[NonSerialized]
 		public bool dirty;
 
@@ -116,22 +119,24 @@ namespace TrueSync
 		}
 
         /// <summary>
-        /// 消息描述:消息头+玩家1消息体+玩家2消息体+...
-        /// 消息头:tick+OwnerID+drpoFromPlayerId+dropPlayer(来源于第一个SyncedData)
-        /// 消息体:SyncedData(真实的是处理了SyncedData的InputDataBase)
+        /// 消息描述:数据头+数据包。
+        /// 数据头:tick+OwnerID+drpoFromPlayerId+dropPlayer(来源于第一个SyncedData)
+        /// 数据包:SyncedData(真实的是处理了SyncedData的InputDataBase)
         /// </summary>
-        /// <param name="syncedData"></param>
+        /// <param name="syncedData">目前这个数组容量是1</param>
         /// <returns></returns>
 		public static byte[] Encode(SyncedData[] syncedData)
 		{
 			SyncedData.bytesToEncode.Clear();
 			if (syncedData.Length != 0)
 			{
-				syncedData[0].GetEncodedHeader(SyncedData.bytesToEncode);//编码第一个syncedData的一些数据
+				syncedData[0].GetEncodedHeader(SyncedData.bytesToEncode);//编码数据头
                 //编码每个syncedData包括第一个
                 for (int i = 0; i < syncedData.Length; i++)
 				{
-					syncedData[i].GetEncodedActions(SyncedData.bytesToEncode);//执行的就是InputDataBase->Serialize，序列化的是InputData里的字典，字典都转成byte
+                    //编码数据包
+                    //执行的就是InputDataBase->Serialize，序列化的是InputData里的字典，字典都转成byte
+                    syncedData[i].GetEncodedActions(SyncedData.bytesToEncode);
                 }
 			}
             //new 相应大小的byte数组返回

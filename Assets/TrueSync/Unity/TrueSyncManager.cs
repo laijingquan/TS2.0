@@ -211,6 +211,7 @@ namespace TrueSync {
             StateTracker.Init(currentConfig.rollbackWindow);
             TSRandom.Init();
 
+            //物理引擎初始化
             if (currentConfig.physics2DEnabled || currentConfig.physics3DEnabled) {
                 PhysicsManager.New(currentConfig);
                 PhysicsManager.instance.LockedTimeStep = lockedTimeStep;
@@ -224,6 +225,8 @@ namespace TrueSync {
             instance = this;
             Application.runInBackground = true;
 
+            //离线状态 就AbstractLockstep的OnEventDataReceived接收网络数据不会执行
+            //更换网络接口 可以从ICommunicator接口 入手
             ICommunicator communicator = null;
             if (!PhotonNetwork.connected || !PhotonNetwork.inRoom) {
                 Debug.LogWarning("You are not connected to Photon. TrueSync will start in offline mode.");
@@ -300,12 +303,12 @@ namespace TrueSync {
                 generalBehaviours.Add(NewManagedBehavior(behavioursArray[index]));//一个TrueSyncBehaviour对应TrueSyncManagedBehaviour
             }
 
-            initBehaviors();//初始化玩家prefab
+            initBehaviors();//初始化玩家prefab和挂在prefab上的TrueSyncBehaviour
             initGeneralBehaviors(generalBehaviours, false);//公用和玩家的区分，公用分给generalBehaviours,玩家分给behaviorsByPlayer
 
             PhysicsManager.instance.OnRemoveBody(OnRemovedRigidBody);
 
-            startState = StartState.BEHAVIOR_INITIALIZED;
+            startState = StartState.BEHAVIOR_INITIALIZED;//初始化完毕状态
         }
 
         /// <summary>
@@ -321,7 +324,8 @@ namespace TrueSync {
             return result;
         }
         /// <summary>
-        /// 实例化该脚本上挂载的prafab,有多少个玩家就实例化多少个prefab,同时查找TrueSyncBehaviour脚本。并配置key:OwnerID,value:TrusSyncMangedBehaviour到behaviorsByPlayer容器上方便管理
+        /// 实例化该脚本上挂载的prefab,有多少个玩家就实例化多少个prefab,同时查找TrueSyncBehaviour脚本。并配置key:OwnerID,value:TrusSyncMangedBehaviour到behaviorsByPlayer容器上方便管理
+        /// 初始化玩家的同步组件
         /// </summary>
         private void initBehaviors()
         {
@@ -339,7 +343,7 @@ namespace TrueSync {
                     GameObject prefab = playerPrefabs[index];
 
                     GameObject prefabInst = Instantiate(prefab);
-                    //初始化ICollider和TSTransform
+                    //初始化ICollider和TSTransform 添加到TS物理引擎中管理
                     InitializeGameObject(prefabInst, prefabInst.transform.position.ToTSVector(), prefabInst.transform.rotation.ToTSQuaternion());
                     //查找该prafab是否有TrueSyncBehaviour脚本，如果有需要配置相应的TrueSyncManagedBehaviour
                     TrueSyncBehaviour[] behaviours = prefabInst.GetComponentsInChildren<TrueSyncBehaviour>();
@@ -347,24 +351,24 @@ namespace TrueSync {
                     {
                         TrueSyncBehaviour behaviour = behaviours[index2];
 
-                        behaviour.owner = p.playerInfo;//配置玩家信息
-                        behaviour.localOwner = lockstep.LocalPlayer.playerInfo;//配置本地玩家信息
+                        behaviour.owner = p.playerInfo;//配置玩家信息TSPlayerInfo
+                        behaviour.localOwner = lockstep.LocalPlayer.playerInfo;//配置当前房间本地玩家信息TSPlayerInfo
                         behaviour.numberOfPlayers = lockstep.Players.Count;//配置玩家人数
 
-                        TrueSyncManagedBehaviour tsmb = NewManagedBehavior(behaviour);
-                        tsmb.owner = behaviour.owner;//配置玩家信息
-                        tsmb.localOwner = behaviour.localOwner;//配置本地玩家信息
+                        TrueSyncManagedBehaviour tsmb = NewManagedBehavior(behaviour);//一个TrueSyncBehaviour要生成一个TrueSyncManagedBehaviour来接收lockstep的声明周期回调（OnSyncedInput OnPreSyncedUpdate）
+                        tsmb.owner = behaviour.owner;//配置玩家信息TSPlayerInfo
+                        tsmb.localOwner = behaviour.localOwner;//配置当前房间本地玩家信息TSPlayerInfo
 
-                        behaviorsInstatiated.Add(tsmb);
+                        behaviorsInstatiated.Add(tsmb);//一个玩家对应所有需要同步的组件塞到容器里
                     }
                 }
 
-                behaviorsByPlayer.Add(p.ID, behaviorsInstatiated);
+                behaviorsByPlayer.Add(p.ID, behaviorsInstatiated);//一个玩家下面可能有多个组件需要同步
             }
         }
 
         /// <summary>
-        /// 
+        ///  从generalBehaviours剔除玩家的TrueSyncBehaviour,填充到behaviorsByPlayer
         /// </summary>
         /// <param name="behaviours"></param>
         /// <param name="realOwnerId">表示TrueSyncManagedBehaviour的owner是否配置了</param>
@@ -428,6 +432,7 @@ namespace TrueSync {
 
         /// <summary>
         /// 要想在中途添加需要实时同步的对象（不管是玩家的，还是公用的）是需要先加入等待队列,要遵守帧同步的生命周期
+        /// 会在lockstep的开始"OnGameStarted"和每个逻辑帧OnStepUpdate检测一次
         /// </summary>
         private void CheckQueuedBehaviours()
         {
@@ -447,6 +452,9 @@ namespace TrueSync {
                 queuedBehaviours.Clear();
             }
         }
+        /// <summary>
+        /// TrueSyncManager的Start函数执行后startState == StartState.BEHAVIOR_INITIALIZED
+        /// </summary>
         //TrueSyncManager的状态:StartState.BEHAVIOR_INITIALIZED->StartState.FIRST_UPDATE->StartState.STARTED
         void Update()
         {
@@ -467,7 +475,7 @@ namespace TrueSync {
         }
 
         /**
-         * @brief Run/Unpause the game simulation.
+         * @brief Run/Unpause the game simulation.外部UI等直接调用 就可以继续游戏
          **/
         public static void RunSimulation() {
             if (instance != null && instance.lockstep != null) {
@@ -476,7 +484,7 @@ namespace TrueSync {
         }
 
         /**
-         * @brief Pauses the game simulation.
+         * @brief Pauses the game simulation.外部UI等直接调用 就可以暂停游戏
          **/
         public static void PauseSimulation() {
             if (instance != null && instance.lockstep != null) {
@@ -485,7 +493,7 @@ namespace TrueSync {
         }
 
         /**
-         * @brief End the game simulation.
+         * @brief End the game simulation.外部UI等直接调用 就可以结束游戏
          **/
         public static void EndSimulation() {
             if (instance != null && instance.lockstep != null) {
@@ -786,7 +794,7 @@ namespace TrueSync {
         /// <param name="playerInputData"></param>
         void GetLocalData(InputDataBase playerInputData)
         {
-            TrueSyncInput.CurrentInputData = (InputData) playerInputData;
+            TrueSyncInput.CurrentInputData = (InputData) playerInputData;//赋予给静态变量 方便外部函数调用
 
             if (behaviorsByPlayer.ContainsKey(playerInputData.ownerID))
             {

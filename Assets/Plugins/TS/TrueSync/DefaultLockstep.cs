@@ -34,7 +34,11 @@ namespace TrueSync
 		{
 			return ChecksumExtractor.GetEncodedChecksum();
 		}
-
+        /// <summary>
+        /// 每个玩家都有数据并且不是伪造的
+        /// </summary>
+        /// <param name="syncedDataTick"></param>
+        /// <returns></returns>
 		protected override bool IsStepReady(int syncedDataTick)
 		{
 			bool flag = true;

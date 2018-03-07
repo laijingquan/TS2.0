@@ -4,7 +4,13 @@ using UnityEngine;
 
 namespace TrueSync
 {
-	public abstract class AbstractLockstep
+    //生命周期
+    //OnGameStarted 玩家都准备好了 开始游戏（通过TSPlayer.sentSyncedStart变量判断是否准备好）
+    //OnSyncedInput UpdateData的时候被调用
+    //OnPlayerDisconnection ExecutePhysicsStep的时候被调用
+    //OnStepUpdate ExecutePhysicsStep的时候被调用
+    // physicsManager.UpdateStep();更新物理
+    public abstract class AbstractLockstep
 	{
 		private enum SimulationState
 		{
@@ -74,7 +80,9 @@ namespace TrueSync
 		private TrueSyncPlayerDisconnectionCallback OnPlayerDisconnection;
 
 		public TrueSyncIsReady GameIsReady;
-
+        /// <summary>
+        /// 逻辑帧ticks 从0开始
+        /// </summary>
 		protected int ticks;
         /// <summary>
         /// maximum amount of missed frames/ticks before a remote player is removed from simulation due to being unresponsive(not sending input values anymore)
@@ -212,9 +220,9 @@ namespace TrueSync
 
 		public static AbstractLockstep NewInstance(float deltaTime, ICommunicator communicator, IPhysicsManagerBase physicsManager, int syncWindow, int panicWindow, int rollbackWindow, TrueSyncEventCallback OnGameStarted, TrueSyncEventCallback OnGamePaused, TrueSyncEventCallback OnGameUnPaused, TrueSyncEventCallback OnGameEnded, TrueSyncPlayerDisconnectionCallback OnPlayerDisconnection, TrueSyncUpdateCallback OnStepUpdate, TrueSyncInputCallback GetLocalData, TrueSyncInputDataProvider InputDataProvider)
 		{
-			bool flag = rollbackWindow <= 0 || communicator == null;
+			//bool flag = rollbackWindow <= 0 || communicator == null;
 			AbstractLockstep result;
-			if (flag)
+			if (rollbackWindow <= 0 || communicator == null)
 			{
 				result = new DefaultLockstep(deltaTime, communicator, physicsManager, syncWindow, panicWindow, rollbackWindow, OnGameStarted, OnGamePaused, OnGameUnPaused, OnGameEnded, OnPlayerDisconnection, OnStepUpdate, GetLocalData, InputDataProvider);
 			}
@@ -263,6 +271,7 @@ namespace TrueSync
 		}
         /// <summary>
         /// this.ticks - this.syncWindow;syncWindow可以理解为缓存窗口,一直让本地预先缓存一下远端过来的数据，让数据更加平滑
+        /// 比如我们想缓存10个数据包才开始仿真逻辑，那么syncWindow就是10。那么就是tick为10的时候，才开始读第一个数据包
         /// </summary>
         /// <returns></returns>
 		protected int GetSyncedDataTick()
@@ -299,10 +308,11 @@ namespace TrueSync
 		{
 			if (this.simulationState == AbstractLockstep.SimulationState.NOT_STARTED)
 			{
-				this.simulationState = AbstractLockstep.SimulationState.WAITING_PLAYERS;
-			}
+				this.simulationState = AbstractLockstep.SimulationState.WAITING_PLAYERS;//Update函数检测到等待玩家状态,那么就会一直调用ChckeGameStart来确定远端玩家是否连上来了
+            }
 			else
 			{
+                //checkGameStart里检测到双方玩家都准备好后，会再次调用此函数来执行OnGameStarted
 				if (this.simulationState == AbstractLockstep.SimulationState.WAITING_PLAYERS || this.simulationState == AbstractLockstep.SimulationState.PAUSED)
 				{
 					if (this.simulationState == AbstractLockstep.SimulationState.WAITING_PLAYERS)
@@ -356,7 +366,7 @@ namespace TrueSync
 					this.compoundStats.UpdateTime(this.deltaTime);
 					if (this.communicator != null)
 					{
-						this.compoundStats.AddValue("ping", (long)this.communicator.RoundTripTime());
+						this.compoundStats.AddValue("ping", (long)this.communicator.RoundTripTime());//网络接口实现的pingpong值显示在屏幕上
 					}
 					if (this.syncWindow == 0)
 					{
@@ -467,12 +477,19 @@ namespace TrueSync
 			}
 			result = true;
 			return result;
-		}
-
+        }
+        /// <summary>
+        ///     和physicsManager.UpdateStep()不一样的是多了下面3句
+        ///     this.ExecuteDelegates(syncedDataTick);//OnPlayerDisconnection
+        ///     this.SyncedArrayToInputArray(data);//data塞到auxPlayersInputData以便StepUpdate有数据分发给所有的TrueSyncBehaviour
+        ///     this.StepUpdate(this.auxPlayersInputData);//TrueSyncManager.OnStepUpdate->所有的TrueSyncBehaviour.OnStepUpdate
+        /// </summary>
+        /// <param name="data">所有玩家的数据</param>
+        /// <param name="syncedDataTick"></param>
 		protected void ExecutePhysicsStep(List<SyncedData> data, int syncedDataTick)
 		{
-			this.ExecuteDelegates(syncedDataTick);
-			this.SyncedArrayToInputArray(data);//data塞到auxPlayersInputData以便StepUpdate有数据分发给所有的TrueSyncBehaviour
+			this.ExecuteDelegates(syncedDataTick);//OnPlayerDisconnection
+            this.SyncedArrayToInputArray(data);//data塞到auxPlayersInputData以便StepUpdate有数据分发给所有的TrueSyncBehaviour（作用就是将List<SyncedData>转换成List<InputDataBase>）
             this.StepUpdate(this.auxPlayersInputData);//TrueSyncManager.OnStepUpdate->所有的TrueSyncBehaviour.OnStepUpdate
             this.physicsManager.UpdateStep();
 		}
@@ -513,6 +530,9 @@ namespace TrueSync
 			this.auxActivePlayersIds = this.playersIdsAux.ToArray();
 		}
 
+        /// <summary>
+        /// 先检测远端玩家都准备好没，如果没有发送196事件 告诉所有远端玩家我已经准备好了
+        /// </summary>
 		private void CheckGameStart()
 		{
             //默认是ReplayMode.NO_REPLAY
@@ -536,7 +556,7 @@ namespace TrueSync
 					this.RunSimulation(false);
 					SyncedData.pool.FillStack(this.activePlayers.Count * (this.syncWindow + this.rollbackWindow));
 				}
-                //其他玩家还没有准备好,发送196事件
+                //发送196事件,告诉远端玩家 我已经准备好了
                 else
                 {
 					this.RaiseEvent(SYNCED_GAME_START_CODE, SyncedInfo.Encode(new SyncedInfo
@@ -559,12 +579,19 @@ namespace TrueSync
 			}
 		}
 
+        /// <summary>
+        /// 暂停仿真 并且通知其他玩家
+        /// </summary>
 		public void PauseSimulation()
 		{
 			this.Pause();
-			this.RaiseEvent(SIMULATION_CODE, new byte[1], true, this.auxActivePlayersIds);//content:0
+			this.RaiseEvent(SIMULATION_CODE, new byte[1], true, this.auxActivePlayersIds);//197事件，消息内容是0:OnEventDataReceived{pause()}
         }
 
+        /// <summary>
+        /// firstRun
+        /// </summary>
+        /// <param name="firstRun">中途停止了想再次仿真，firstRun传false,他会发消息给通知其他玩家暂停结束了。</param>
 		public void RunSimulation(bool firstRun)
 		{
 			this.Run();
@@ -575,18 +602,20 @@ namespace TrueSync
 				this.RaiseEvent(SIMULATION_CODE, new byte[]
 				{
 					1
-				}, true, this.auxActivePlayersIds);
-			}
+				}, true, this.auxActivePlayersIds);//197事件，消息内容是1:OnEventDataReceived{run()}
+            }
 		}
-
+        /// <summary>
+        /// 结束仿真 并且通知其他玩家
+        /// </summary>
 		public void EndSimulation()
 		{
 			this.End();
 			this.RaiseEvent(SIMULATION_CODE, new byte[]
 			{
 				3
-			}, true, this.auxActivePlayersIds);
-		}
+			}, true, this.auxActivePlayersIds);//197事件，消息内容是3:OnEventDataReceived{end()}
+        }
 
 		public void Destroy(IBody rigidBody)
 		{
@@ -671,10 +700,10 @@ namespace TrueSync
 			else
 			{
 				SyncedData syncedData = SyncedData.pool.GetNew();
-                syncedData.Init(this.localPlayer.ID, this.ticks);
-				this.GetLocalData(syncedData.inputData);//TrueSyncManager.GetLocalData, 调用OnSyncedInput();
-                this.localPlayer.AddData(syncedData);//本地数据直接塞给本地玩家，下面还需要把本地数据发送给远端
-				if (this.communicator != null)
+                syncedData.Init(this.localPlayer.ID, this.ticks);//本地玩家ID来构造一个空数据包,等待输入数据填充
+				this.GetLocalData(syncedData.inputData);//TrueSyncManager.GetLocalData, 调用OnSyncedInput();获取本地玩家输入
+                this.localPlayer.AddData(syncedData);//本地数据直接塞给本地玩家(controls key:ticks value:syncedData 存储玩家每个tick的数据)，下面还需要把本地数据发送给远端
+                if (this.communicator != null)
 				{
                     //因为_syncedDataCacheUpdateData只有一个,所以只获取了一个SyncedData
                     this.localPlayer.GetSendData(this.ticks, this._syncedDataCacheUpdateData);//从TSplayer的controls里取数据
@@ -730,12 +759,12 @@ namespace TrueSync
 		{
 			if (eventCode == SEND_CODE)
 			{
-				byte[] data = content as byte[];
-				List<SyncedData> list = SyncedData.Decode(data);//只有list[0]是携带玩家ownerID数据,剩余的list都是该玩家的数据
+				byte[] data = content as byte[];//一次只接收一个玩家的数据
+				List<SyncedData> list = SyncedData.Decode(data);//目前该list的容量是1,并且该list是由SyncedData.poolList.GetNew();来创建的，所以后面要用SyncedData.pool.GiveBack来销毁
                 //注意list是网络数据
                 if (list.Count > 0)
 				{
-                    //tSPlayer是本地数据，是需要和根据网络数据同步的
+                    //取出对应的远端玩家数据来更新
 					TSPlayer tSPlayer = this.players[list[0].inputData.ownerID];
 					if (!tSPlayer.dropped)
 					{
@@ -754,7 +783,7 @@ namespace TrueSync
 						int count = list.Count;
 						while (i < count)
 						{
-							SyncedData.pool.GiveBack(list[i]);
+							SyncedData.pool.GiveBack(list[i]);//掉线直接回收
 							i++;
 						}
 					}
@@ -799,7 +828,7 @@ namespace TrueSync
 						{
 							byte[] infoBytes2 = content as byte[];
 							SyncedInfo syncedInfo = SyncedInfo.Decode(infoBytes2);
-							this.players[syncedInfo.playerId].sentSyncedStart = true;
+							this.players[syncedInfo.playerId].sentSyncedStart = true;//玩家准备好标志
 						}
 					}
 				}
@@ -842,18 +871,23 @@ namespace TrueSync
 			}
 			return this.auxPlayersSyncedData;
 		}
-
+        /// <summary>
+        /// dict方式存储所有玩家,list方式存储所有玩家,数组方式更新远端玩家
+        /// </summary>
+        /// <param name="playerId"></param>
+        /// <param name="playerName"></param>
+        /// <param name="isLocal"></param>
 		public void AddPlayer(byte playerId, string playerName, bool isLocal)
 		{
 			TSPlayer tSPlayer = new TSPlayer(playerId, playerName);
-			this.players.Add(tSPlayer.ID, tSPlayer);
-			this.activePlayers.Add(tSPlayer);
+			this.players.Add(tSPlayer.ID, tSPlayer);//dict方式存储所有玩家
+			this.activePlayers.Add(tSPlayer);//list方式存储所有玩家
 			if (isLocal)
 			{
 				this.localPlayer = tSPlayer;
 				this.localPlayer.sentSyncedStart = true;
 			}
-			this.UpdateActivePlayers();
+			this.UpdateActivePlayers();//数组方式更新远端玩家
 			if (this.replayMode == ReplayMode.RECORD_REPLAY)
 			{
 				this.replayRecord.AddPlayer(tSPlayer);
@@ -876,8 +910,8 @@ namespace TrueSync
 				{
 					this.compoundStats.globalStats.GetInfo("panic").count = 0L;
 					p.dropped = true;
-					this.activePlayers.Remove(p);
-					this.UpdateActivePlayers();
+					this.activePlayers.Remove(p);//更新 all集合
+					this.UpdateActivePlayers();//更新 other 集合
 					Debug.Log("Player dropped (stopped sending input)");
 					int key = this.GetSyncedDataTick() + 1;//下一帧为掉线玩家
 					if (!this.playersDisconnect.ContainsKey(key))
