@@ -490,7 +490,7 @@ namespace TrueSync
 		{
 			this.ExecuteDelegates(syncedDataTick);//OnPlayerDisconnection
             this.SyncedArrayToInputArray(data);//data塞到auxPlayersInputData以便StepUpdate有数据分发给所有的TrueSyncBehaviour（作用就是将List<SyncedData>转换成List<InputDataBase>）
-            this.StepUpdate(this.auxPlayersInputData);//TrueSyncManager.OnStepUpdate->所有的TrueSyncBehaviour.OnStepUpdate
+            this.StepUpdate(this.auxPlayersInputData);//TrueSyncManager.OnStepUpdate->所有的TrueSyncBehaviour.OnSyncUpdate，设置物理参数
             this.physicsManager.UpdateStep();
 		}
 
@@ -687,7 +687,7 @@ namespace TrueSync
 			}
 		}
         /// <summary>
-        /// 收集本地玩家的输入，并通过服务器发送给其他玩家
+        /// 收集本地玩家的输入，并通过服务器发送给其他玩家 OnSyncInput在这调用
         /// </summary>
         /// <returns></returns>
         private SyncedData UpdateData()

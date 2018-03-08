@@ -37,6 +37,7 @@ public class GameSyncManager : TrueSyncBehaviour {
                 GameObject box = TrueSyncManager.SyncedInstantiate(this.boxPrefab, TSVector.zero, TSQuaternion.identity);
                 TSRigidBody body = box.GetComponent<TSRigidBody>();
                 body.position = new TrueSync.TSVector(i * 2 - 5, 1, j * 2);
+                //body.constraints = TrueSync.Physics3D.TSRigidBodyConstraints.FreezePositionY;
             }
         }
     }
