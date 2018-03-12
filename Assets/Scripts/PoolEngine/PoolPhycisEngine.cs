@@ -5,12 +5,14 @@ using TrueSync;
 public class PoolPhycisEngine : MonoBehaviour {
 
 	// Use this for initialization
-	void Start () {
+	void Start ()
+    {
 	
 	}
 	
 	// Update is called once per frame
-	void Update () {
+	void Update ()
+    {
 	
 	}
 }
@@ -56,22 +58,33 @@ public class Detection
     /// </summary>
     /// <param name="tedge"></param>
     /// <param name="crd"></param>
-    /// <returns></returns>
-    public PoolCollision CheckCircle_LineCollision(tableEdge tedge,CircleRunData crd)
+    /// <returns>是否在该段时间内相交</returns>
+    public bool CheckCircle_LineCollision(tableEdge tedge,CircleRunData crd,ref FP t_percent)
     {
         //Sc
         TSVector2 Sc = PointToLineDir(tedge.start, tedge.end, crd.cur_pos);
         //Se
         TSVector2 Se = PointToLineDir(tedge.start, tedge.end, crd.cur_pos);
 
+        TSVector2 Scnormal = TSVector2.Normalize(Sc);
+        TSVector2 Senormal = TSVector2.Normalize(Se);
         //只有两种结果 同向和 反向
-        FP result = TSVector2.Dot(Sc, TSVector2.Normalize(Se));
+        FP result = TSVector2.Dot(Sc, Senormal);
+        FP Scnorm = TSVector2.Dot(Scnormal, Scnormal);//Sc模平方
+        FP Senorm = TSVector2.Dot(Senormal, Senormal);//Se模平方
+        FP radius_square = crd.radius * crd.radius;
 
-        if (result<0)
+        if (result>0&& Scnorm > radius_square && Senorm > radius_square)//Sc,Se同向，俩圆圆半径大于到直线距离,不相交
         {
-
+            return false;
         }
-        return null;
+        else//相交 求t
+        {
+            TSVector2 sce = Sc - Se;
+            FP S = TSMath.Sqrt( TSVector2.Dot(sce, sce));
+            t_percent = (Scnorm-crd.radius) / S;//圆心到达撞击点的距离/圆心经过的总距离 来求出时间占比
+            return true;
+        }
     }
 
     /// <summary>
