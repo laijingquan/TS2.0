@@ -74,7 +74,7 @@ public class PoolPhycisEngine : MonoBehaviour {
     // Use this for initialization
     void Start ()
     {
-        moveDir = new TSVector2(1, 1).normalized;
+        moveDir = new TSVector2(1, 0.3).normalized;
 	}
 
     private bool control = true;
@@ -98,6 +98,7 @@ public class PoolPhycisEngine : MonoBehaviour {
         ball.cur_pos+= moveDir * moveSpeed * deltaTime;
     }
 
+    private static int testnumber = 0;
     void UpdatePhysicStep(FP deltaTime)
     {
         bool step = true;
@@ -120,7 +121,12 @@ public class PoolPhycisEngine : MonoBehaviour {
         };
         while (step)
         {
-            step = false;
+            testnumber++;
+            if(testnumber>3)
+            {
+                Debug.Log("大于3次检测");
+            }
+            //step = false;
             TSVector2 nextPos = PredictPos(deltaTime);
             crd.cur_pos = ball.cur_pos;
             crd.next_pos = nextPos;
@@ -128,28 +134,49 @@ public class PoolPhycisEngine : MonoBehaviour {
             //TSVector2 curMoveDir = nextPos - ball.cur_pos;
             FP t_percent = 0;
             TSVector2 hitPos = TSVector2.zero;
-            if (Detection.CheckCircle_LineContact(tableEdges[0], crd, ref t_percent) && checkBound((hitPos = PredictPos(deltaTime * t_percent)).x, tableEdges[0].start.x, tableEdges[0].end.x))
+
+            TSVector2 predictEndPos = ball.cur_pos + moveDir * 100;
+
+            //在当前速度下,预测圆最先和哪条边碰撞
+            for (int i =0;i<tableEdges.Length;i++)
             {
-                updateDirAndTime(t_percent,hitPos,tableEdges[0]);
-                //control = false;
+                if (Detection.CheckSegement_Contact(ball.cur_pos, predictEndPos, tableEdges[i].start, tableEdges[i].end))
+                {
+                    if (Detection.CheckCircle_LineContact(tableEdges[i], crd, ref t_percent))
+                    {
+                        updateDirAndTime(t_percent, hitPos, tableEdges[i]);
+                    }
+                    else
+                    {
+                        testnumber = 0;
+                        step = false;
+                        UpdateBallPos(deltaTime);//这次更新后 无任何碰撞
+                    }
+                    break;//每次只能有一边能碰撞
+                }
             }
-            else if (Detection.CheckCircle_LineContact(tableEdges[1], crd, ref t_percent) && checkBound((hitPos = PredictPos(deltaTime * t_percent)).x, tableEdges[1].start.x, tableEdges[1].end.x))
-            {
-                updateDirAndTime(t_percent, hitPos, tableEdges[1]);
-            }
-            else if (Detection.CheckCircle_LineContact(tableEdges[2], crd, ref t_percent) && checkBound((hitPos = PredictPos(deltaTime * t_percent)).y, tableEdges[2].start.y, tableEdges[2].end.y))
-            {
-                updateDirAndTime(t_percent, hitPos, tableEdges[2]);
-            }
-            else if (Detection.CheckCircle_LineContact(tableEdges[3], crd, ref t_percent) && checkBound((hitPos = PredictPos(deltaTime * t_percent)).y, tableEdges[3].start.y, tableEdges[3].end.y))
-            {
-                updateDirAndTime(t_percent, hitPos, tableEdges[3]);
-            }
-            else
-            {
-                step = false;
-                UpdateBallPos(deltaTime);//这次更新后 无任何碰撞
-            }
+            //if (Detection.CheckCircle_LineContact(tableEdges[0], crd, ref t_percent) && checkBound((hitPos = PredictPos(deltaTime * t_percent)).x, tableEdges[0].start.x, tableEdges[0].end.x))
+            //{
+            //    updateDirAndTime(t_percent,hitPos,tableEdges[0]);
+            //    //control = false;
+            //}
+            //else if (Detection.CheckCircle_LineContact(tableEdges[1], crd, ref t_percent) && checkBound((hitPos = PredictPos(deltaTime * t_percent)).x, tableEdges[1].start.x, tableEdges[1].end.x))
+            //{
+            //    updateDirAndTime(t_percent, hitPos, tableEdges[1]);
+            //}
+            //else if (Detection.CheckCircle_LineContact(tableEdges[2], crd, ref t_percent) && checkBound((hitPos = PredictPos(deltaTime * t_percent)).y, tableEdges[2].start.y, tableEdges[2].end.y))
+            //{
+            //    updateDirAndTime(t_percent, hitPos, tableEdges[2]);
+            //}
+            //else if (Detection.CheckCircle_LineContact(tableEdges[3], crd, ref t_percent) && checkBound((hitPos = PredictPos(deltaTime * t_percent)).y, tableEdges[3].start.y, tableEdges[3].end.y))
+            //{
+            //    updateDirAndTime(t_percent, hitPos, tableEdges[3]);
+            //}
+            //else
+            //{
+            //    step = false;
+            //    UpdateBallPos(deltaTime);//这次更新后 无任何碰撞
+            //}
         }
     }
 
@@ -281,12 +308,12 @@ public class Detection
     }
 
     /// <summary>
-    /// 检测俩线段是否有交点
+    /// 检测俩线段是否有交点,如果是预测圆的走向是否和线段有交点,那么线段的俩端点需要延长圆半径长度
     /// </summary>
-    /// <param name="start1"></param>
-    /// <param name="end1"></param>
-    /// <param name="start2"></param>
-    /// <param name="end2"></param>
+    /// <param name="start1">圆心</param>
+    /// <param name="end1">圆心目标点</param>
+    /// <param name="start2">线段起点</param>
+    /// <param name="end2">线段终点</param>
     /// <returns></returns>
     public static bool CheckSegement_Contact(TSVector2 start1,TSVector2 end1,TSVector2 start2,TSVector2 end2)
     {
@@ -303,7 +330,7 @@ public class Detection
         TSVector2 DA = A - D;
         TSVector2 DB = B - D;
 
-        return vector_product(AC, AD) * vector_product(BC, BD)<=TSMath.Epsilon && vector_product(CA, CB) * vector_product(DA, DB) <= TSMath.Epsilon;
+        return vector_product(AC, AD) * vector_product(BC, BD) <= 0 && vector_product(CA, CB) * vector_product(DA, DB) <= 0;
     }
 
     public static FP vector_product(TSVector2 va,TSVector2 vb)
