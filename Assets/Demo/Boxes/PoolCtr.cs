@@ -4,7 +4,8 @@ using TrueSync;
 /**
 * @brief Manages player's ball behavior.        
 **/
-public class SimpleControl : TrueSyncBehaviour {
+public class PoolCtr : TrueSyncBehaviour
+{
 
     /**
     * @brief Key to set/get horizontal position from {@link TrueSyncInput}.
@@ -40,22 +41,27 @@ public class SimpleControl : TrueSyncBehaviour {
     /**
     * @brief Initial setup when game is started.
     **/
-    public override void OnSyncedStart () {
+    public override void OnSyncedStart()
+    {
         // if is first player then changes ball's color to black
-		if (owner != null && owner.Id == 1) {
-			GetComponent<Renderer> ().material.color = Color.black;
-		}
+        if (owner != null && owner.Id == 1)
+        {
+            GetComponent<Renderer>().material.color = Color.black;
+        }
 
-        if (!createdRuntime) {
+        if (!createdRuntime)
+        {
             tsRigidBody.position = new TrueSync.TSVector(-3 + (owner.Id - 1) * 4, 1, 16);
         }
-	}
+    }
 
     /**
     * @brief Sets player inputs.
     **/
-    public override void OnSyncedInput() {
-        if (createdRuntime) {
+    public override void OnSyncedInput()
+    {
+        if (createdRuntime)
+        {
             return;
         }
 
@@ -71,13 +77,15 @@ public class SimpleControl : TrueSyncBehaviour {
     /**
     * @brief Updates ball's movements and instantiates new ball objects when player press space.
     **/
-    public override void OnSyncedUpdate() {
-		FP hor = (FP) TrueSyncInput.GetInt(INPUT_KEY_HORIZONTAL) / 100;
-		FP ver = (FP) TrueSyncInput.GetInt(INPUT_KEY_VERTICAL) / 100;
+    public override void OnSyncedUpdate()
+    {
+        FP hor = (FP)TrueSyncInput.GetInt(INPUT_KEY_HORIZONTAL) / 100;
+        FP ver = (FP)TrueSyncInput.GetInt(INPUT_KEY_VERTICAL) / 100;
         bool currentCreateState = TrueSyncInput.GetBool(INPUT_KEY_CREATE);
 
         // Instantiates a new ball belonging to current player if the following criteria is true
-        if (!lastCreateState && currentCreateState && !createdRuntime) {
+        if (!lastCreateState && currentCreateState && !createdRuntime)
+        {
             SimpleControl otherSP = TrueSyncManager.SyncedInstantiate(prefab, tsTransform.position, tsTransform.rotation).GetComponent<SimpleControl>();
             otherSP.createdRuntime = true;
             otherSP.owner = owner;
@@ -89,45 +97,52 @@ public class SimpleControl : TrueSyncBehaviour {
 
         TSVector forceToApply = TSVector.zero;
 
-        if (FP.Abs(hor) > FP.Zero) {
+        if (FP.Abs(hor) > FP.Zero)
+        {
             forceToApply.x = hor / 3;
         }
 
-		if (FP.Abs(ver) > FP.Zero) {
+        if (FP.Abs(ver) > FP.Zero)
+        {
             forceToApply.z = ver / 3;
         }
-
-        tsRigidBody.AddForce(forceToApply, ForceMode.Impulse);
-
+        tsRigidBody.velocity = forceToApply*10;
+        //tsRigidBody.AddForce(forceToApply, ForceMode.Impulse);
         lastCreateState = currentCreateState;
     }
 
     /**
     * @brief Tints box's material with gray color when it collides with the ball.
     **/
-    public void OnSyncedCollisionEnter(TSCollision other) {
-		if (other.gameObject.name == "Ball(Clone)") {
-			other.gameObject.GetComponent<Renderer> ().material.color = Color.gray;
-		}
-	}
+    public void OnSyncedCollisionEnter(TSCollision other)
+    {
+        if (other.gameObject.name == "Ball(Clone)")
+        {
+            other.gameObject.GetComponent<Renderer>().material.color = Color.gray;
+        }
+    }
 
     /**
     * @brief Increases box's local scale by 1% while collision with a ball remains active.
     **/
-    public void OnSyncedCollisionStay(TSCollision other) {
-		if (other.gameObject.name == "Box(Clone)") {
-			other.gameObject.transform.localScale *= 1.01f;
-		}
-	}
+    public void OnSyncedCollisionStay(TSCollision other)
+    {
+        if (other.gameObject.name == "Box(Clone)")
+        {
+            other.gameObject.transform.localScale *= 1.01f;
+        }
+    }
 
     /**
     * @brief Resets changes in box's properties when there is no more collision with the ball.
     **/
-    public void OnSyncedCollisionExit(TSCollision other) {
-		if (other.gameObject.name == "Box(Clone)") {
-			other.gameObject.transform.localScale = Vector3.one;
-			other.gameObject.GetComponent<Renderer> ().material.color = Color.blue;
-		}
-	}
+    public void OnSyncedCollisionExit(TSCollision other)
+    {
+        if (other.gameObject.name == "Box(Clone)")
+        {
+            other.gameObject.transform.localScale = Vector3.one;
+            other.gameObject.GetComponent<Renderer>().material.color = Color.blue;
+        }
+    }
 
 }
