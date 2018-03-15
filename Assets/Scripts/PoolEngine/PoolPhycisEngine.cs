@@ -3,6 +3,7 @@ using System.Collections;
 using TrueSync;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 public class PoolPhycisEngine : MonoBehaviour {
 
@@ -12,7 +13,7 @@ public class PoolPhycisEngine : MonoBehaviour {
     private CircleData ball = new CircleData();
 
     private TSVector2 moveDir = TSVector2.zero;
-    private FP moveSpeed = 10;
+    private FP moveSpeed = 20;
 
     CircleRunData crd = new CircleRunData();
 
@@ -29,6 +30,8 @@ public class PoolPhycisEngine : MonoBehaviour {
         //球
         ball.cur_pos = TSVector2.zero;
         ball.radius = 0.5;
+        //ball.cur_pos = new TSVector2(-4.5, -0.6104878);
+        moveDir = new TSVector2(1, 0.3).normalized;
 
         //上
         //tableEdges[0].start = new TSVector2(-tableWidth/2, tableHeight/2);
@@ -84,7 +87,7 @@ public class PoolPhycisEngine : MonoBehaviour {
     // Use this for initialization
     void Start ()
     {
-        moveDir = new TSVector2(1, 0.3).normalized;
+        //moveDir = new TSVector2(1, 0.3).normalized;
         //var r = Detection.CheckSegement_Contact(new TSVector2(-4.5, 2.2), new TSVector2(-4.5, 2.2) + new TSVector2(-0.9578263, 0.2873478), tableEdges[0].start, tableEdges[0].end);
 	}
 
@@ -101,8 +104,8 @@ public class PoolPhycisEngine : MonoBehaviour {
 
     TSVector2 PredictPos(FP deltaTime)
     {
-        ball.predict_pos = ball.cur_pos + moveDir * moveSpeed * deltaTime;
-        return ball.predict_pos;
+        //ball.predict_pos = ball.cur_pos + moveDir * moveSpeed * deltaTime;
+        return ball.cur_pos + moveDir * moveSpeed * deltaTime;
     }
 
     void UpdateBallPos(FP deltaTime)
@@ -114,13 +117,13 @@ public class PoolPhycisEngine : MonoBehaviour {
 
     private static int testnumber = 0;
     private List<testData> td = new List<testData>();
-    void AddTestData(tableEdge tbg, TSVector2 curpos,TSVector2 nextpos, TSVector2 hitpos,TSVector2 premoveDir,TSVector2 aftmoveDir)
+    void AddTestData(tableEdge tbg, TSVector2 prepos, TSVector2 hitpos,TSVector2 premoveDir,TSVector2 aftmoveDir)
     {
-        td.Add(new testData() { tbg = tbg, curPos = curpos, nextPos=nextpos,hitpos = hitpos, PremoveDir = premoveDir ,AftmoveDir=aftmoveDir});
+        td.Add(new testData() { tbg = tbg, prehitPos= prepos, hitpos = hitpos, PremoveDir = premoveDir ,AftmoveDir=aftmoveDir});
     }
     void ClearTestData()
     {
-        td.Clear();
+        //td.Clear();
     }
 
     public void CheckBound()
@@ -164,11 +167,12 @@ public class PoolPhycisEngine : MonoBehaviour {
                 return false;
         };
 
-        Action<FP,tableEdge> updateDirAndTime = (_percent,_tbe) =>{
+        Action<FP,tableEdge> updateDirAndTime = (_percent,_tbe) =>
+        {
             UpdateBallPos(deltaTime * _percent);//先更新到撞击点
             deltaTime = deltaTime - deltaTime * _percent;//更新剩余时间
             var curReflcDir = Detection.CheckCircle_LineCollision(_tbe,ball.cur_pos, ball.radius, moveDir);//计算碰撞响应
-            AddTestData(_tbe, ball.pre_pos,ball.predict_pos,ball.cur_pos, moveDir, curReflcDir);
+            AddTestData(_tbe, ball.pre_pos,ball.cur_pos, moveDir, curReflcDir);
             moveDir = curReflcDir.normalized;//更新实时方向
             //UpdateBallPos(deltaTime); 在这里更新 如果速度过快 那么会直接跑到球桌
         };
@@ -181,9 +185,9 @@ public class PoolPhycisEngine : MonoBehaviour {
                 Debug.Log("大于3次检测");
             }
             //step = false;
-            PredictPos(deltaTime);//预测经过deltaTime后的位置
+            var next_pos = PredictPos(deltaTime);//预测经过deltaTime后的位置
             crd.cur_pos = ball.cur_pos;
-            crd.next_pos = ball.predict_pos;
+            crd.next_pos = next_pos;
             crd.radius = ball.radius;
 
             FP t_percent = 0;
@@ -191,32 +195,70 @@ public class PoolPhycisEngine : MonoBehaviour {
             TSVector2 predictEndPos = ball.cur_pos + moveDir * 100;
 
             bool isflag = false;
+            List<fastEdge> fastedges = new List<fastEdge>();
             //在当前速度下,预测圆最先和哪条边碰撞
             for (int i =0;i<tableEdges.Length;i++)
             {
-                if (Detection.CheckSegement_Contact(ball.cur_pos, predictEndPos, tableEdges[i].start, tableEdges[i].end))
+                //if (Detection.CheckSegement_Contact(ball.cur_pos, predictEndPos, tableEdges[i].start, tableEdges[i].end))
+                //{
+                var cur_proj = Detection.PointToLineDir(tableEdges[i].start, tableEdges[i].end, crd.cur_pos);
+                var next_proj = Detection.PointToLineDir(tableEdges[i].start, tableEdges[i].end,crd.next_pos);
+                FP cur_projValue = TSMath.Abs(TSVector2.Dot(cur_proj, cur_proj));//当前圆心位置到线段的有向距离
+                FP next_projValue = TSMath.Abs(TSVector2.Dot(next_proj, next_proj));//预测下一圆心位置到线段的有向距离
+                if (cur_projValue <= next_projValue) continue;//证明球正在远离该线段,不用检测
+
+                if (Detection.CheckCircle_LineContact(tableEdges[i], crd, ref t_percent))
                 {
-                    if (Detection.CheckCircle_LineContact(tableEdges[i], crd, ref t_percent))
-                    {                        
-                        updateDirAndTime(t_percent, tableEdges[i]);
-                    }
-                    else
-                    {
-                        testnumber = 0;
-                        step = false;
-                        UpdateBallPos(deltaTime);//这次更新后 无任何碰撞
-                    }
-                    isflag = true;
-                    break;//每次只能有一边能碰撞
+                    fastedges.Add(new fastEdge(tableEdges[i], t_percent));
+                    //updateDirAndTime(t_percent, tableEdges[i]);
+                    //isflag = true;//还要继续step
+                    //break;//最先碰撞到的边会先break
                 }
+                //else
+                //{
+                //    testnumber = 0;
+                //    step = false;
+                //    UpdateBallPos(deltaTime);//这次更新后 无任何碰撞
+                //}
+                //isflag = true;
+                //break;//每次只能有一边能碰撞(如果射线交于两条线段的公共点，那么直接break就会有问题，可能最先碰撞的线段被忽略了)
+                //}
+            }
+
+            if(fastedges.Count>0)
+            {
+                fastedges = fastedges.OrderBy((x)=>x.t_percent).ToList();
+                isflag = true;//还要继续step
+                updateDirAndTime(fastedges[0].t_percent, fastedges[0].tbe);//更新位置，并且由于撞击而更改速度方向
             }
 
             if(!isflag)
             {
-                Debug.Log("没有预测到碰撞");
                 step = false;
                 testnumber = 0;
+                UpdateBallPos(deltaTime);//无任何碰撞直接更新位置
             }
+        }
+    }
+    Vector3 ToXZ(TSVector2 target)
+    {
+        return new Vector3(target.x.AsFloat(), 0, target.y.AsFloat());
+    }
+    public void OnDrawGizmos()
+    {
+        if(Application.isPlaying)
+        {
+            if (tableEdges != null)
+            {
+                for (int i = 0; i < tableEdges.Length; i++)
+                {
+                    var tbg = tableEdges[i];
+                    if (tbg != null)
+                        Gizmos.DrawLine(ToXZ(tbg.start), ToXZ(tbg.end));
+                }
+            }
+            if (ball != null)
+                Gizmos.DrawRay(ToXZ(ball.cur_pos), ToXZ(moveDir * 1000));
         }
     }
 
@@ -225,14 +267,37 @@ public class PoolPhycisEngine : MonoBehaviour {
 public class testData
 {
     public tableEdge tbg;
-    public TSVector2 curPos;//记录当前位置
-    public TSVector2 nextPos;//记录预测的位置
+    public TSVector2 prehitPos;//记录撞击前的位置
     public TSVector2 hitpos;//记录撞击的位置
     public TSVector2 PremoveDir;
     public TSVector2 AftmoveDir;
 }
 
+public class fastEdgeCompare : Comparer<fastEdge>
+{
+    public override int Compare(fastEdge x, fastEdge y)
+    {
+        if(x.t_percent>y.t_percent)
+        {
+            return 1;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+}
 
+public class fastEdge
+{
+    public fastEdge(tableEdge _tbe,FP _t_percent)
+    {
+        tbe = _tbe;
+        t_percent = _t_percent;
+    }
+    public tableEdge tbe;
+    public FP t_percent;
+}
 
 public class tableEdge
 {
@@ -272,7 +337,7 @@ public class CircleRunData
 public class CircleData
 {
     public TSVector2 pre_pos;//上次真是停留的位置
-    public TSVector2 predict_pos;//基于pre_pos和速度预测的位置
+    //public TSVector2 predict_pos;//基于pre_pos和速度预测的位置
     public TSVector2 cur_pos;//基于碰撞检测,当前停留的真实位置
     public FP radius;
 }
@@ -300,8 +365,8 @@ public class Detection
         //只有两种结果 同向和 反向
         FP result = TSVector2.Dot(Scnormal, Senormal);//1同向,0垂直,-1反向
         
-        FP Scnorm = TSMath.Sqrt(TSVector2.Dot(Sc, Sc));//Sc模
-        FP Senorm = TSMath.Sqrt(TSVector2.Dot(Se, Se));//Se模
+        FP Scnorm = TSMath.Sqrt(TSMath.Abs(TSVector2.Dot(Sc, Sc)));//Sc模
+        FP Senorm = TSMath.Sqrt(TSMath.Abs(TSVector2.Dot(Se, Se)));//Se模
         //FP radius_square = crd.radius * crd.radius;
 
         if (result>0&& Scnorm > crd.radius && Senorm > crd.radius)//Sc,Se同向，俩圆圆半径大于到直线距离,不相交
@@ -342,7 +407,7 @@ public class Detection
         TSVector2 AC = C - A;
         TSVector2 AB = B - A;
         TSVector2 ABnormal = TSVector2.Normalize(AB);
-        TSVector2 AO = TSMath.Abs(TSVector2.Dot(AC, ABnormal)) * ABnormal;
+        TSVector2 AO = TSVector2.Dot(AC, ABnormal) * ABnormal;
         TSVector2 CO= CA + AO;
         return CO;
     }
