@@ -4,6 +4,21 @@ namespace PoolEngine
 {
     public class Detection
     {
+
+        /// <summary>
+        /// 圆和圆的动态相交检测(根据相对运动,抽象为一方是运动,另一方是静止)
+        /// </summary>
+        /// <param name="cd"></param>
+        /// <param name="crd"></param>
+        /// <returns></returns>
+        //public TSVector2 CheckCircle_CircleCollision(CircleRunData runCircle, CircleRunData staticCircle)
+        //{
+        //    TSVector2 VA = runCircle.next_pos - runCircle.cur_pos;
+        //    TSVector2 VB = staticCircle.next_pos - staticCircle.cur_pos;
+        //    //两个运动方向描述为一方运动另一方静止 so
+        //    TSVector2 VAB = VA - VB;//runCircle相对于staticCircle的运动方向
+        //}
+
         /// <summary>
         /// 圆和边的动态相交检测
         /// </summary>
@@ -181,15 +196,5 @@ namespace PoolEngine
             }
         }
         #endregion
-        /// <summary>
-        /// 圆和圆的动态相交检测
-        /// </summary>
-        /// <param name="cd"></param>
-        /// <param name="crd"></param>
-        /// <returns></returns>
-        //public PoolCollision CheckCircle_CircleCollision(CircleData cd,CircleRunData crd)
-        //{
-        //    return null;
-        //}
     }
 }
