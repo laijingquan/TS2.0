@@ -13,7 +13,7 @@ public class PoolPhycisEngine : MonoBehaviour {
     private CircleData ball = new CircleData();
 
     private TSVector2 moveDir = TSVector2.zero;
-    private FP moveSpeed = 20;
+    private FP moveSpeed = 10;
 
     CircleRunData crd = new CircleRunData();
 
@@ -199,30 +199,30 @@ public class PoolPhycisEngine : MonoBehaviour {
             //在当前速度下,预测圆最先和哪条边碰撞
             for (int i =0;i<tableEdges.Length;i++)
             {
-                //if (Detection.CheckSegement_Contact(ball.cur_pos, predictEndPos, tableEdges[i].start, tableEdges[i].end))
-                //{
-                var cur_proj = Detection.PointToLineDir(tableEdges[i].start, tableEdges[i].end, crd.cur_pos);
-                var next_proj = Detection.PointToLineDir(tableEdges[i].start, tableEdges[i].end,crd.next_pos);
-                FP cur_projValue = TSMath.Abs(TSVector2.Dot(cur_proj, cur_proj));//当前圆心位置到线段的有向距离
-                FP next_projValue = TSMath.Abs(TSVector2.Dot(next_proj, next_proj));//预测下一圆心位置到线段的有向距离
-                if (cur_projValue <= next_projValue) continue;//证明球正在远离该线段,不用检测
-
-                if (Detection.CheckCircle_LineContact(tableEdges[i], crd, ref t_percent))
+                if (Detection.CheckSegement_Contact(ball.cur_pos, predictEndPos, tableEdges[i].farstart, tableEdges[i].farend))
                 {
-                    fastedges.Add(new fastEdge(tableEdges[i], t_percent));
-                    //updateDirAndTime(t_percent, tableEdges[i]);
-                    //isflag = true;//还要继续step
-                    //break;//最先碰撞到的边会先break
+                    //var cur_proj = Detection.PointToLineDir(tableEdges[i].start, tableEdges[i].end, crd.cur_pos);
+                    //var next_proj = Detection.PointToLineDir(tableEdges[i].start, tableEdges[i].end,crd.next_pos);
+                    //FP cur_projValue = TSMath.Abs(TSVector2.Dot(cur_proj, cur_proj));//当前圆心位置到线段的有向距离
+                    //FP next_projValue = TSMath.Abs(TSVector2.Dot(next_proj, next_proj));//预测下一圆心位置到线段的有向距离
+                    //if (cur_projValue <= next_projValue) continue;//证明球正在远离该线段,不用检测
+
+                    if (Detection.CheckCircle_LineContact(tableEdges[i], crd, ref t_percent))
+                    {
+                        fastedges.Add(new fastEdge(tableEdges[i], t_percent));
+                        //updateDirAndTime(t_percent, tableEdges[i]);
+                        //isflag = true;//还要继续step
+                        //break;//最先碰撞到的边会先break
+                    }
+                    //else
+                    //{
+                    //    testnumber = 0;
+                    //    step = false;
+                    //    UpdateBallPos(deltaTime);//这次更新后 无任何碰撞
+                    //}
+                    //isflag = true;
+                    //break;//每次只能有一边能碰撞(如果射线交于两条线段的公共点，那么直接break就会有问题，可能最先碰撞的线段被忽略了)
                 }
-                //else
-                //{
-                //    testnumber = 0;
-                //    step = false;
-                //    UpdateBallPos(deltaTime);//这次更新后 无任何碰撞
-                //}
-                //isflag = true;
-                //break;//每次只能有一边能碰撞(如果射线交于两条线段的公共点，那么直接break就会有问题，可能最先碰撞的线段被忽略了)
-                //}
             }
 
             if(fastedges.Count>0)
@@ -465,7 +465,16 @@ public class Detection
         var r2 = vector_product(BC, BD);
         var r3 = vector_product(CA, CB);
         var r4 = vector_product(DA, DB);
-        return r1 * r2<= 0 && r3* r4 <= 0;
+        //这里直接相乘可以会溢出 所以暂时这样判断
+        if((r1>0&&r2<0 || r1<0&&r2>0)&& (r3 > 0 && r4 < 0 || r3 < 0 && r4 > 0))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+        //return r1*r2 <= 0 && r3*r4 <= 0
     }
 
     public static FP vector_product(TSVector2 va,TSVector2 vb)
