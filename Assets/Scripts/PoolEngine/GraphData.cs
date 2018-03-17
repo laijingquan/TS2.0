@@ -33,6 +33,16 @@ namespace PoolEngine
     /// </summary>
     public class CircleRunData
     {
+        public CircleRunData(TSVector2 _cur_pos, TSVector2 _next_pos, FP _radius)
+        {
+            cur_pos = _cur_pos;
+            next_pos = _next_pos;
+            radius = _radius;
+        }
+        public CircleRunData()
+        {
+
+        }
         public TSVector2 cur_pos;
         public TSVector2 next_pos;
         public FP radius;
@@ -71,6 +81,19 @@ namespace PoolEngine
                 return -1;
             }
         }
+    }
+
+    public class fastHitBall
+    {
+        public fastHitBall(BallObj _runballObj,BallObj _staticballObj, FP _t_percent)
+        {
+            runballObj = _runballObj;
+            staticballObj = _staticballObj;
+            t_percent = _t_percent;
+        }
+        public BallObj runballObj;
+        public BallObj staticballObj;
+        public FP t_percent;
     }
 
     public class fastEdge

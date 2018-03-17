@@ -13,7 +13,7 @@ namespace PoolEngine
             pre_pos = TSVector2.zero;
             radius = _radius;
             moveDir = _moveDir;
-            moveSpeed = _moveSpeed;
+            moveSpeed = _moveSpeed;            
         }
         public BallObj()
         {
@@ -43,11 +43,14 @@ namespace PoolEngine
             ballrender.transform.position = new Vector3(cur_pos.x.AsFloat(), 0, cur_pos.y.AsFloat());
         }
 
-        public TSVector2 PredictPos(FP deltaTime)
+        public TSVector2 PredictPos(FP _deltaTime)
+        {
+            return cur_pos + moveDir * moveSpeed * _deltaTime;
+        }
+        public TSVector2 PredictPos()
         {
             return cur_pos + moveDir * moveSpeed * deltaTime;
         }
-
         public void UpdateBallPos(FP deltaTime)
         {
             pre_pos = cur_pos;
@@ -61,7 +64,8 @@ namespace PoolEngine
         public FP radius=0.5;
         public TSVector2 moveDir=TSVector2.zero;
         public FP moveSpeed=10;
-
+        public FP deltaTime=0;
+        //public bool isSleep = true;
         public GameObject ballrender;
     }
 }

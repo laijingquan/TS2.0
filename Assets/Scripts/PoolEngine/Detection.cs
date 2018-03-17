@@ -4,6 +4,22 @@ namespace PoolEngine
 {
     public class Detection
     {
+        /// <summary>
+        /// 计算球和球的互相作用方向
+        /// </summary>
+        /// <returns></returns>
+        public static TSVector2[] CheckCircle_CircleCollision(CircleRunData runCircle, CircleRunData staticCircle)
+        {
+            TSVector2 V = runCircle.next_pos - runCircle.cur_pos;
+            TSVector2 U = staticCircle.next_pos - staticCircle.cur_pos;
+            TSVector2 Vx = new TSVector2(V.x, 0);
+            TSVector2 Vy = new TSVector2(0, V.y);
+            TSVector2 Ux = new TSVector2(U.x, 0);
+            TSVector2 Uy = new TSVector2(0, U.y);
+            V = Ux + Vy;//反弹后的方向
+            U = Vx + Uy;//反弹后的方向
+            return new TSVector2[2] { V,U };
+        }
 
         /// <summary>
         /// 圆和圆的动态相交检测(根据相对运动,抽象为一方是运动,另一方是静止)
@@ -11,13 +27,53 @@ namespace PoolEngine
         /// <param name="cd"></param>
         /// <param name="crd"></param>
         /// <returns></returns>
-        //public TSVector2 CheckCircle_CircleCollision(CircleRunData runCircle, CircleRunData staticCircle)
-        //{
-        //    TSVector2 VA = runCircle.next_pos - runCircle.cur_pos;
-        //    TSVector2 VB = staticCircle.next_pos - staticCircle.cur_pos;
-        //    //两个运动方向描述为一方运动另一方静止 so
-        //    TSVector2 VAB = VA - VB;//runCircle相对于staticCircle的运动方向
-        //}
+        public static bool CheckCircle_CircleContact(CircleRunData runCircle, CircleRunData staticCircle,FP deltaTime,ref FP _percent)
+        {
+            TSVector2 VA = runCircle.next_pos - runCircle.cur_pos;
+            TSVector2 VB = staticCircle.next_pos - staticCircle.cur_pos;
+            //两个运动方向描述为一方运动另一方静止 so
+            TSVector2 VAB = VA - VB;//runCircle相对于staticCircle的运动方向pc
+            TSVector2 Idir = staticCircle.cur_pos - runCircle.cur_pos;//射线起点到静态圆的方向
+            FP Idir_length_square = TSVector2.Dot(Idir, Idir);
+            FP static_radius_square = (staticCircle.radius * 2)* (staticCircle.radius * 2);
+
+            //可以在返回true的时候再计算，后优化
+            {
+                TSVector2 e_dir = staticCircle.cur_pos - runCircle.cur_pos;
+                TSVector2 d_dir = runCircle.next_pos - runCircle.cur_pos;
+                TSVector2 d_dirnormal = d_dir.normalized;
+                FP a_projvalue = TSMath.Abs(TSVector2.Dot(e_dir, d_dirnormal));
+                FP b_squar = TSVector2.Dot(e_dir, e_dir) - a_projvalue * a_projvalue;
+                FP f = (2 * staticCircle.radius) - b_squar;
+                FP t = a_projvalue - f;//碰撞到静态圆所走的路程，总路程是runCircle.cur_pos+VAB*delataTime;
+                _percent = t / (runCircle.cur_pos + VAB * deltaTime).magnitude;
+            }
+
+            if (Idir_length_square < static_radius_square)//射线起点在圆心内部,相交
+            {
+                return true;
+            }
+            else//射线起点在圆心外部的情况
+            {
+                FP s = TSVector2.Dot(Idir, VAB);
+                if(s<0)//球体位于射线原点的后面 不相交
+                {
+                    return false;
+                }
+                else
+                {
+                    FP m_square = Idir_length_square - s * s;//球心到投影点距离的平方
+                    if (m_square > static_radius_square) //不相交
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
 
         /// <summary>
         /// 圆和边的动态相交检测
