@@ -93,6 +93,12 @@ namespace PoolEngine
         {
             td.Add(new testData() { tbg = tbg, prehitPos = prepos, hitpos = hitpos, PremoveDir = premoveDir, AftmoveDir = aftmoveDir });
         }
+
+        public void AddTestData(BallObj obj)
+        {
+            td.Add(new testData() { ball = obj });
+        }
+
         void ClearTestData()
         {
             //td.Clear();
@@ -146,8 +152,15 @@ namespace PoolEngine
                 ball.deltaTime = _deltaTime;
             }
             bool checkCollide = false;
-            while(true)
+            testnumber = 0;
+            while (true)
             {
+                testnumber++;
+                if (testnumber > 100)
+                {
+                    Debug.Log("防止死循环");
+                    break;
+                }
                 checkCollide = false;
                 var checkballs = new List<BallObj>(balls);
                 for (int k = 0; k < balls.Count; k++)
@@ -165,35 +178,35 @@ namespace PoolEngine
                     var deltaTime = ball.deltaTime;//每个球的剩余的时长是不一样的
                     //var _step = true;
                     List<fastHitBall> fastHitBalls = new List<fastHitBall>();
-                    //#region 球碰撞检测
-                    //CircleRunData run_crd = new CircleRunData(ball.cur_pos, ball.PredictPos(), ball.radius);
-                    //for (int j = 0; j < checkballs.Count; j++)
-                    //{
-                    //    var otherball = balls[j];
-                    //    if (otherball == ball) continue;
-                    //    FP _percent = 0;
-                    //    CircleRunData static_crd = new CircleRunData(otherball.cur_pos, otherball.PredictPos(), otherball.radius);
-                    //    if (Detection.CheckCircle_CircleContact(run_crd, static_crd, ball.deltaTime, ref _percent))
-                    //    {
-                    //        fastHitBalls.Add(new fastHitBall(ball, otherball, _percent));
-                    //    }
-                    //}
+                    #region 球碰撞检测
+                    CircleRunData run_crd = new CircleRunData(ball.cur_pos, ball.PredictPos(), ball.radius);
+                    for (int j = 0; j < checkballs.Count; j++)
+                    {
+                        var otherball = balls[j];
+                        if (otherball == ball) continue;
+                        FP _percent = 0;
+                        CircleRunData static_crd = new CircleRunData(otherball.cur_pos, otherball.PredictPos(), otherball.radius);
+                        if (Detection.CheckCircle_CircleContact(run_crd, static_crd, ball.deltaTime, ref _percent))
+                        {
+                            fastHitBalls.Add(new fastHitBall(ball, otherball, _percent));
+                        }
+                    }
 
-                    //if (fastHitBalls.Count > 0)
-                    //{
-                    //    fastHitBalls = fastHitBalls.OrderBy((m) => m.t_percent).ToList();//碰撞集合中，抽取时间最短的碰撞
-                    //                                                                     //更新俩球的碰撞位置和方向
-                    //    updateDirAndTimeByBall(fastHitBalls[0].t_percent, fastHitBalls[0].runballObj, fastHitBalls[0].staticballObj);
-                    //    checkballs.Remove(fastHitBalls[0].runballObj);
-                    //    checkballs.Remove(fastHitBalls[0].staticballObj);
-                    //    fastHitBalls[0].runballObj.lockcheck = true;
-                    //    fastHitBalls[0].staticballObj.lockcheck = true;
+                    if (fastHitBalls.Count > 0)
+                    {
+                        fastHitBalls = fastHitBalls.OrderBy((m) => m.t_percent).ToList();//碰撞集合中，抽取时间最短的碰撞
+                        //更新俩球的碰撞位置和方向
+                        updateDirAndTimeByBall(fastHitBalls[0].t_percent, fastHitBalls[0].runballObj, fastHitBalls[0].staticballObj);
+                        checkballs.Remove(fastHitBalls[0].runballObj);
+                        checkballs.Remove(fastHitBalls[0].staticballObj);
+                        fastHitBalls[0].runballObj.lockcheck = true;
+                        fastHitBalls[0].staticballObj.lockcheck = true;
 
-                    //    checkCollide = true;
-                    //    continue;//发生球碰撞就不需要检测和边的碰撞，直接跳出。
-                    //}
+                        checkCollide = true;
+                        continue;//发生球碰撞就不需要检测和边的碰撞，直接跳出。
+                    }
 
-                    //#endregion
+                    #endregion
                     //step = true;
                     #region 边检测
                     //testnumber++;

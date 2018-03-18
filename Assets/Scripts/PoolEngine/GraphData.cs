@@ -66,6 +66,7 @@ namespace PoolEngine
         public TSVector2 hitpos;//记录撞击的位置
         public TSVector2 PremoveDir;
         public TSVector2 AftmoveDir;
+        public BallObj ball;
     }
 
     public class fastEdgeCompare : Comparer<fastEdge>
