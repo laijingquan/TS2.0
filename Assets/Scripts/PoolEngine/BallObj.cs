@@ -51,10 +51,14 @@ namespace PoolEngine
         {
             return cur_pos + moveDir * moveSpeed * deltaTime;
         }
-        public void UpdateBallPos(FP deltaTime)
+        public void UpdateBallPos(FP _deltaTime)
         {
+            if (_deltaTime < 0) return;
             pre_pos = cur_pos;
-            cur_pos += moveDir * moveSpeed * deltaTime;
+            cur_pos += moveDir * moveSpeed * _deltaTime;
+            deltaTime -= _deltaTime;//更新剩余时间
+            if (deltaTime < 0)
+                deltaTime = 0;
             //CheckBound();
         }
 
@@ -65,7 +69,9 @@ namespace PoolEngine
         public TSVector2 moveDir=TSVector2.zero;
         public FP moveSpeed=10;
         public FP deltaTime=0;
+        public bool lockcheck = false;
         //public bool isSleep = true;
         public GameObject ballrender;
+
     }
 }

@@ -1,4 +1,5 @@
-﻿using TrueSync;
+﻿using System;
+using TrueSync;
 
 namespace PoolEngine
 {
@@ -37,25 +38,28 @@ namespace PoolEngine
             FP Idir_length_square = TSVector2.Dot(Idir, Idir);
             FP static_radius_square = (staticCircle.radius * 2)* (staticCircle.radius * 2);
 
+            Func<FP> calHitInfo = () =>
             //可以在返回true的时候再计算，后优化
             {
                 TSVector2 e_dir = staticCircle.cur_pos - runCircle.cur_pos;
-                TSVector2 d_dir = runCircle.next_pos - runCircle.cur_pos;
-                TSVector2 d_dirnormal = d_dir.normalized;
-                FP a_projvalue = TSMath.Abs(TSVector2.Dot(e_dir, d_dirnormal));
+                //TSVector2 d_dir = Idir/*runCircle.next_pos - runCircle.cur_pos*/;
+                //TSVector2 d_dirnormal = VAB.normalized;
+                FP a_projvalue = TSMath.Abs(TSVector2.Dot(e_dir, VAB.normalized));
                 FP b_squar = TSVector2.Dot(e_dir, e_dir) - a_projvalue * a_projvalue;
-                FP f = (2 * staticCircle.radius) - b_squar;
+                FP f = TSMath.Sqrt(static_radius_square - b_squar);
                 FP t = a_projvalue - f;//碰撞到静态圆所走的路程，总路程是runCircle.cur_pos+VAB*delataTime;
-                _percent = t / (runCircle.cur_pos + VAB * deltaTime).magnitude;
-            }
+                return t /*/ (VAB * deltaTime).magnitude*/;//求出占比
+            };
 
             if (Idir_length_square < static_radius_square)//射线起点在圆心内部,相交
             {
-                return true;
+                _percent =  calHitInfo();
+                //_percent = 1;//一开始就相交的
+                return false;
             }
             else//射线起点在圆心外部的情况
             {
-                FP s = TSVector2.Dot(Idir, VAB);
+                FP s = TSVector2.Dot(Idir, VAB.normalized);
                 if(s<0)//球体位于射线原点的后面 不相交
                 {
                     return false;
@@ -63,13 +67,19 @@ namespace PoolEngine
                 else
                 {
                     FP m_square = Idir_length_square - s * s;//球心到投影点距离的平方
-                    if (m_square > static_radius_square) //不相交
+                    if (m_square > static_radius_square) //预测不相交
                     {
                         return false;
                     }
                     else
                     {
-                        return true;
+                        var t = calHitInfo();
+                        if(t<=VAB.magnitude)
+                        {
+                            _percent = t / VAB.magnitude;
+                            return true;
+                        }
+                        return false;
                     }
                 }
             }
