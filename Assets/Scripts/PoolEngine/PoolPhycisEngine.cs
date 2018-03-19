@@ -31,15 +31,27 @@ namespace PoolEngine
         {
             var ballObj = new BallObj();
             ballObj.ID = 1;
-            ballObj.moveDir = new TSVector2(1, 0.3).normalized;
             ballObj.moveSpeed = 10;
-            ballObj.cur_pos = new TSVector2(1, 1);
+            ballObj.moveDir = new TSVector2(-1, 0).normalized;
+            ballObj.cur_pos = new TSVector2(2, 0);
             balls.Add(ballObj);
             ballObj = new BallObj();
             ballObj.ID = 2;
-            ballObj.moveDir = new TSVector2(-1, 0.3).normalized;
             ballObj.moveSpeed = 5;
+            ballObj.moveDir = new TSVector2(-1, 0).normalized;
             balls.Add(ballObj);
+
+            //var ballObj = new BallObj();
+            //ballObj.ID = 1;
+            //ballObj.moveSpeed = 10;
+            //ballObj.moveDir = new TSVector2(1, 0.3).normalized;
+            //ballObj.cur_pos = new TSVector2(1, 1);
+            //balls.Add(ballObj);
+            //ballObj = new BallObj();
+            //ballObj.ID = 2;
+            //ballObj.moveSpeed = 5;
+            //ballObj.moveDir = new TSVector2(-1, 0.3).normalized;
+            //balls.Add(ballObj);
 
             //ballObj = new BallObj();
             //ballObj.moveDir = new TSVector2(-1, -1).normalized;
@@ -89,14 +101,22 @@ namespace PoolEngine
 
         private static int testnumber = 0;
         private List<testData> td = new List<testData>();
+        private Dictionary<int, List<BallObj>> record = new Dictionary<int, List<BallObj>>();
         void AddTestData(tableEdge tbg, TSVector2 prepos, TSVector2 hitpos, TSVector2 premoveDir, TSVector2 aftmoveDir)
         {
             td.Add(new testData() { tbg = tbg, prehitPos = prepos, hitpos = hitpos, PremoveDir = premoveDir, AftmoveDir = aftmoveDir });
         }
 
-        public void AddTestData(BallObj obj)
+        public void AddTestData(int step,List<BallObj >objs)
         {
-            td.Add(new testData() { ball = obj });
+            var temp = new List<BallObj>();
+            for(int i =0; i <objs.Count;i++)
+            {
+                temp.Add(new BallObj(objs[i]));
+            }
+
+            record.Add(step, temp);
+            //td.Add(new testData() { ball = obj });
         }
 
         void ClearTestData()
@@ -123,7 +143,7 @@ namespace PoolEngine
 
             var runcrd = new CircleRunData(runball.cur_pos, runball.PredictPos(), runball.radius);
             var staticcrd = new CircleRunData(staticball.cur_pos, staticball.PredictPos(), staticball.radius);
-            var curReflcDir = Detection.CheckCircle_CircleCollision(runcrd, staticcrd);//计算碰撞响应
+            var curReflcDir = Detection.CheckCircle_CircleCollision(runball.moveDir, staticball.moveDir);//计算碰撞响应
             //AddTestData(_tbe, ball.pre_pos, ball.cur_pos, ball.moveDir, curReflcDir);
             runball.moveDir = curReflcDir[0].normalized;//更新实时方向
             staticball.moveDir = curReflcDir[1].normalized;
@@ -143,7 +163,8 @@ namespace PoolEngine
         void UpdatePhysicStep(FP _deltaTime)
         {
             //bool step = true;
-
+            step++;
+            AddTestData(step,balls);
             ClearTestData();
 
             for (int k = 0; k < balls.Count; k++)
@@ -171,7 +192,7 @@ namespace PoolEngine
 
                 for (int k = 0; k < checkballs.Count; k++)
                 {
-                    var ball = balls[k];
+                    var ball = checkballs[k];
                     if (ball.lockcheck||ball.deltaTime<=0)
                         break;
                     //var deltaTime = _deltaTime;
@@ -182,7 +203,7 @@ namespace PoolEngine
                     CircleRunData run_crd = new CircleRunData(ball.cur_pos, ball.PredictPos(), ball.radius);
                     for (int j = 0; j < checkballs.Count; j++)
                     {
-                        var otherball = balls[j];
+                        var otherball = checkballs[j];
                         if (otherball == ball) continue;
                         FP _percent = 0;
                         CircleRunData static_crd = new CircleRunData(otherball.cur_pos, otherball.PredictPos(), otherball.radius);
@@ -196,7 +217,8 @@ namespace PoolEngine
                     {
                         fastHitBalls = fastHitBalls.OrderBy((m) => m.t_percent).ToList();//碰撞集合中，抽取时间最短的碰撞
                         //更新俩球的碰撞位置和方向
-                        updateDirAndTimeByBall(fastHitBalls[0].t_percent, fastHitBalls[0].runballObj, fastHitBalls[0].staticballObj);
+                        //updateDirAndTimeByBall(fastHitBalls[0].t_percent, fastHitBalls[0].runballObj, fastHitBalls[0].staticballObj);
+                        m_fastHitBall.Add(fastHitBalls[0]);
                         checkballs.Remove(fastHitBalls[0].runballObj);
                         checkballs.Remove(fastHitBalls[0].staticballObj);
                         fastHitBalls[0].runballObj.lockcheck = true;
@@ -234,7 +256,7 @@ namespace PoolEngine
 
                             if (Detection.CheckCircle_LineContact(tableEdges[i], crd, ref t_percent))
                             {
-                                fastedges.Add(new fastEdge(tableEdges[i], t_percent));
+                                fastedges.Add(new fastEdge(ball,tableEdges[i], t_percent));
                             }
                         }
                     }
@@ -243,21 +265,53 @@ namespace PoolEngine
                     {
                         fastedges = fastedges.OrderBy((x) => x.t_percent).ToList();
                         //isflag = true;//还要继续step
-                        updateDirAndTimeByEdge( fastedges[0].t_percent, fastedges[0].tbe, ball);//更新位置，并且由于撞击而更改速度方向
+                        //updateDirAndTimeByEdge( fastedges[0].t_percent, fastedges[0].tbe, ball);//更新位置，并且由于撞击而更改速度方向
+                        m_fastHitEdge.Add(fastedges[0]);
                         checkCollide = true;
                     }
                     //无碰撞,直接更新
                     else
                     {
-                        ball.UpdateBallPos(ball.deltaTime);//无任何碰撞直接更新位置
+                        m_fastBall.Add(new fastBall(ball, ball.deltaTime));
+                        //ball.UpdateBallPos(ball.deltaTime);//无任何碰撞直接更新位置
                     }
                 }
                 #endregion
-
+                ProcessHitData();
                 if (!checkCollide)
                     break;//没有碰撞了 可以直接跳出
             }
         }
+
+        void ProcessHitData()
+        {
+            if(m_fastHitBall.Count>0)
+            {
+                for(int i =0; i < m_fastHitBall.Count;i++)
+                {
+                    updateDirAndTimeByBall(m_fastHitBall[i].t_percent, m_fastHitBall[i].runballObj, m_fastHitBall[i].staticballObj);
+                }
+            }
+            m_fastHitBall.Clear();
+            if (m_fastHitEdge.Count>0)
+            {
+                for (int i = 0; i < m_fastHitEdge.Count; i++)
+                {
+                    updateDirAndTimeByEdge(m_fastHitEdge[i].t_percent, m_fastHitEdge[i].tbe, m_fastHitEdge[i].ball);//更新位置，并且由于撞击而更改速度方向
+                }
+            }
+            m_fastHitEdge.Clear();
+            if(m_fastBall.Count>0)
+            {
+                for (int i = 0; i < m_fastBall.Count; i++)
+                {
+                    m_fastBall[i].ball.UpdateBallPos(m_fastBall[i].deltaTime);//无任何碰撞直接更新位置
+                }
+            }
+            m_fastBall.Clear();
+        }
+
+        private int step = 0;
 
         private tableEdge[] tableEdges = new tableEdge[4];
         private FP tableWidth = 10;
@@ -269,7 +323,9 @@ namespace PoolEngine
         //private FP moveSpeed = 10;
 
         CircleRunData crd = new CircleRunData();
-
+        private List<fastHitBall> m_fastHitBall = new List<fastHitBall>();
+        private List<fastEdge> m_fastHitEdge = new List<fastEdge>();
+        private List<fastBall> m_fastBall = new List<fastBall>();
         //GameObject ballObj;
 
 

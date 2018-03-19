@@ -84,6 +84,17 @@ namespace PoolEngine
         }
     }
 
+    public class fastBall
+    {
+        public fastBall(BallObj _ball,FP _deltaTime)
+        {
+            ball = _ball;
+            deltaTime = _deltaTime;
+        }
+        public BallObj ball;
+        public FP deltaTime;
+    }
+
     public class fastHitBall
     {
         public fastHitBall(BallObj _runballObj,BallObj _staticballObj, FP _t_percent)
@@ -99,11 +110,13 @@ namespace PoolEngine
 
     public class fastEdge
     {
-        public fastEdge(tableEdge _tbe, FP _t_percent)
+        public fastEdge(BallObj _ball,tableEdge _tbe, FP _t_percent)
         {
+            ball = _ball;
             tbe = _tbe;
             t_percent = _t_percent;
         }
+        public BallObj ball;
         public tableEdge tbe;
         public FP t_percent;
     }

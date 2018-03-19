@@ -12,8 +12,8 @@ namespace PoolEngine
             cur_pos = _cur_pos;
             pre_pos = TSVector2.zero;
             radius = _radius;
-            moveDir = _moveDir;
-            moveSpeed = _moveSpeed;            
+            moveSpeed = _moveSpeed;
+            moveDir = _moveDir*moveSpeed;
         }
         public BallObj()
         {
@@ -60,6 +60,16 @@ namespace PoolEngine
             if (deltaTime < 0)
                 deltaTime = 0;
             //CheckBound();
+        }
+
+        public BallObj(BallObj other)
+        {
+            ID = other.ID;
+            cur_pos = other.cur_pos;
+            pre_pos = other.pre_pos;
+            radius = other.radius;
+            moveDir = other.moveDir;
+            moveSpeed = other.moveSpeed;
         }
 
         public int ID=0;
