@@ -45,17 +45,17 @@ namespace PoolEngine
 
         public TSVector2 PredictPos(FP _deltaTime)
         {
-            return cur_pos + moveDir * moveSpeed * _deltaTime;
+            return cur_pos + moveDir /** moveSpeed*/ * _deltaTime;
         }
         public TSVector2 PredictPos()
         {
-            return cur_pos + moveDir * moveSpeed * deltaTime;
+            return cur_pos + moveDir/* * moveSpeed*/ * deltaTime;
         }
         public void UpdateBallPos(FP _deltaTime)
         {
             if (_deltaTime < 0) return;
             pre_pos = cur_pos;
-            cur_pos += moveDir * moveSpeed * _deltaTime;
+            cur_pos += moveDir /** moveSpeed*/ * _deltaTime;
             deltaTime -= _deltaTime;//更新剩余时间
             if (deltaTime < 0)
                 deltaTime = 0;

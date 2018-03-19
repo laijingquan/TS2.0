@@ -13,10 +13,12 @@ namespace PoolEngine
         {
             TSVector2 V = runCircle.next_pos - runCircle.cur_pos;
             TSVector2 U = staticCircle.next_pos - staticCircle.cur_pos;
-            TSVector2 Vx = new TSVector2(V.x, 0);
-            TSVector2 Vy = new TSVector2(0, V.y);
-            TSVector2 Ux = new TSVector2(U.x, 0);
-            TSVector2 Uy = new TSVector2(0, U.y);
+            TSVector2 AB = staticCircle.cur_pos - runCircle.cur_pos;
+            TSVector2 BA = runCircle.cur_pos - staticCircle.cur_pos;
+            TSVector2 Vx = TSVector2.Dot(V, AB.normalized)*AB.normalized;
+            TSVector2 Vy = V - Vx;
+            TSVector2 Ux = TSVector2.Dot(U, BA.normalized) * BA.normalized;
+            TSVector2 Uy = U - Ux;
             V = Ux + Vy;//反弹后的方向
             U = Vx + Uy;//反弹后的方向
             return new TSVector2[2] { V,U };

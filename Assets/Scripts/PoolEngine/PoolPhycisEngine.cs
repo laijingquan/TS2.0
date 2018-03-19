@@ -29,41 +29,41 @@ namespace PoolEngine
 
         void CreateBalls()
         {
-            var ballObj = new BallObj();
-            ballObj.ID = 1;
-            ballObj.moveSpeed = 10;
-            ballObj.moveDir = new TSVector2(-1, 0).normalized;
-            ballObj.cur_pos = new TSVector2(2, 0);
-            balls.Add(ballObj);
-            ballObj = new BallObj();
-            ballObj.ID = 2;
-            ballObj.moveSpeed = 5;
-            ballObj.moveDir = new TSVector2(-1, 0).normalized;
-            balls.Add(ballObj);
-
             //var ballObj = new BallObj();
             //ballObj.ID = 1;
             //ballObj.moveSpeed = 10;
-            //ballObj.moveDir = new TSVector2(1, 0.3).normalized;
+            //ballObj.moveDir = new TSVector2(-1, 0).normalized * ballObj.moveSpeed;
+            //ballObj.cur_pos = new TSVector2(2, 0);
+            //balls.Add(ballObj);
+            //ballObj = new BallObj();
+            //ballObj.ID = 2;
+            //ballObj.moveSpeed = 5;
+            //ballObj.moveDir = new TSVector2(-1, 0).normalized * ballObj.moveSpeed;
+            //balls.Add(ballObj);
+
+            var ballObj = new BallObj();
+            //ballObj.ID = 1;
+            //ballObj.moveSpeed = 10;
+            //ballObj.moveDir = new TSVector2(1, 0.3).normalized*10;
             //ballObj.cur_pos = new TSVector2(1, 1);
             //balls.Add(ballObj);
             //ballObj = new BallObj();
             //ballObj.ID = 2;
             //ballObj.moveSpeed = 5;
-            //ballObj.moveDir = new TSVector2(-1, 0.3).normalized;
+            //ballObj.moveDir = new TSVector2(-1, 0.3).normalized*5;
             //balls.Add(ballObj);
 
-            //ballObj = new BallObj();
-            //ballObj.moveDir = new TSVector2(-1, -1).normalized;
-            //ballObj.moveSpeed = 5;
-            //ballObj.cur_pos = new TSVector2(-2, 1);
-            //balls.Add(ballObj);
+            ballObj = new BallObj();
+            ballObj.moveDir = new TSVector2(-1, -1).normalized;
+            ballObj.moveSpeed = 5;
+            ballObj.cur_pos = new TSVector2(-2, 1);
+            balls.Add(ballObj);
 
-            //ballObj = new BallObj();
-            //ballObj.moveDir = new TSVector2(-0.5, 0.3).normalized;
-            //ballObj.moveSpeed = 5;
-            //ballObj.cur_pos = new TSVector2(2, 1);
-            //balls.Add(ballObj);
+            ballObj = new BallObj();
+            ballObj.moveDir = new TSVector2(-0.5, 0.3).normalized;
+            ballObj.moveSpeed = 5;
+            ballObj.cur_pos = new TSVector2(2, 1);
+            balls.Add(ballObj);
         }
         void CreateTable()
         {
@@ -131,7 +131,7 @@ namespace PoolEngine
             ball.deltaTime = ball.deltaTime - ball.deltaTime * _percent;//更新剩余时间
             var curReflcDir = Detection.CheckCircle_LineCollision(_tbe, ball.cur_pos, ball.radius, ball.moveDir);//计算碰撞响应
             AddTestData(_tbe, ball.pre_pos, ball.cur_pos, ball.moveDir, curReflcDir);
-            ball.moveDir = curReflcDir.normalized;//更新实时方向
+            ball.moveDir = curReflcDir;//更新实时方向
                                                   //UpdateBallPos(deltaTime); 在这里更新 如果速度过快 那么会直接跑到球桌
         }
         void updateDirAndTimeByBall(FP _percent,BallObj runball,BallObj staticball)
@@ -145,8 +145,8 @@ namespace PoolEngine
             var staticcrd = new CircleRunData(staticball.cur_pos, staticball.PredictPos(), staticball.radius);
             var curReflcDir = Detection.CheckCircle_CircleCollision(runball.moveDir, staticball.moveDir);//计算碰撞响应
             //AddTestData(_tbe, ball.pre_pos, ball.cur_pos, ball.moveDir, curReflcDir);
-            runball.moveDir = curReflcDir[0].normalized;//更新实时方向
-            staticball.moveDir = curReflcDir[1].normalized;
+            runball.moveDir = curReflcDir[0];//更新实时方向
+            staticball.moveDir = curReflcDir[1];
                                                   //UpdateBallPos(deltaTime); 在这里更新 如果速度过快 那么会直接跑到球桌
         }
 
