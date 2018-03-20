@@ -23,7 +23,10 @@ namespace PoolEngine
 
         public void Awake()
         {
-            ballrender = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            //ballrender = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            ballrender = GameObject.Instantiate(Resources.Load("Sphere") as GameObject);
+            var text = ballrender.transform.FindChild("Text");
+            text.transform.GetComponent<TextMesh>().text = ID.ToString();
             UpdateBallDraw();
         }
         // Use this for initialization

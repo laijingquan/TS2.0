@@ -5,6 +5,26 @@ namespace PoolEngine
 {
     public class Detection
     {
+
+        /// <summary>
+        /// 计算球和球的互相作用方向
+        /// </summary>
+        /// <returns></returns>
+        public static TSVector2[] CheckCircle_CircleCollision(TSVector2 run_pos,TSVector2 run_moveDir,TSVector2 static_pos, TSVector2 static_moveDir)
+        {
+            TSVector2 V = run_moveDir;
+            TSVector2 U = static_moveDir;
+            TSVector2 AB = static_pos - run_pos;
+            TSVector2 BA = run_pos - static_pos;
+            TSVector2 Vx = TSVector2.Dot(V, AB.normalized) * AB.normalized;
+            TSVector2 Vy = V - Vx;
+            TSVector2 Ux = TSVector2.Dot(U, BA.normalized) * BA.normalized;
+            TSVector2 Uy = U - Ux;
+            V = Ux + Vy;//反弹后的方向
+            U = Vx + Uy;//反弹后的方向
+            return new TSVector2[2] { V, U };
+        }
+
         /// <summary>
         /// 计算球和球的互相作用方向
         /// </summary>
@@ -64,7 +84,7 @@ namespace PoolEngine
 
             if (Idir_length_square < static_radius_square)//射线起点在圆心内部,相交
             {
-                _percent =  calHitInfo();
+                //_percent =  calHitInfo();
                 //_percent = 1;//一开始就相交的
                 return false;
             }
