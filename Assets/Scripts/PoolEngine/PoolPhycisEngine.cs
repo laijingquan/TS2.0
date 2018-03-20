@@ -33,22 +33,22 @@ namespace PoolEngine
             balls.Add(ballObj);
 
             ballObj = new BallObj(2, TSVector2.zero, new TSVector2(-1, 0).normalized, 5, 0.5);
-            balls.Add(ballObj);
+            //balls.Add(ballObj);
 
             ballObj = new BallObj(3, new TSVector2(-2, 1), new TSVector2(-1, -1).normalized, 5, 0.5);
-            balls.Add(ballObj);
+            //balls.Add(ballObj);
 
             ballObj = new BallObj(4, new TSVector2(2, 1), new TSVector2(-0.5, 0.3).normalized, 5, 0.5);
-            balls.Add(ballObj);
+            //balls.Add(ballObj);
 
             ballObj = new BallObj(5, new TSVector2(2, 1), new TSVector2(-0.5, 0.6).normalized, 50, 0.5);
             balls.Add(ballObj);
 
             ballObj = new BallObj(6, new TSVector2(2, 1), new TSVector2(0.5, 0.3).normalized, 5, 0.5);
-            balls.Add(ballObj);
+            //balls.Add(ballObj);
 
             ballObj = new BallObj(7, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 5, 0.5);
-            balls.Add(ballObj);
+            //balls.Add(ballObj);
         }
         void CreateTable()
         {
@@ -77,11 +77,17 @@ namespace PoolEngine
 
 
         private bool control = true;
+        private FP fixedTime=0;
         // Update is called once per frame
         public void Update(FP deltaTime)
         {
-            if (control)
-                UpdatePhysicStep(deltaTime);//逻辑层
+            fixedTime += deltaTime;
+            while(fixedTime>=0.02)
+            {
+                fixedTime -= 0.02;
+                if (control)
+                    UpdatePhysicStep(deltaTime);//逻辑层
+            }
         }
 
         private static int testnumber = 0;
@@ -164,9 +170,11 @@ namespace PoolEngine
                 testnumber++;
                 if (testnumber > 100)
                 {
-                    Debug.Log("防止死循环");
                     if(testnumber>200)
+                    {
+                        Debug.Log("防止死循环");
                         break;
+                    }
                 }
                 checkCollide = false;
                 var checkballs = new List<BallObj>(balls);
@@ -265,7 +273,16 @@ namespace PoolEngine
                 #endregion
                 ProcessHitData();
                 if (!checkCollide)
-                    break;//没有碰撞了 可以直接跳出
+                {
+                    //没有碰撞了,检查所有球是否有剩余时间，直接走完跳出
+                    for(int i =0; i < balls.Count;i++)
+                    {
+                        var nothitBall = balls[i];
+                        if (nothitBall.deltaTime > 0)
+                            nothitBall.UpdateBallPos(nothitBall.deltaTime);
+                    }
+                    break;
+                }
             }
         }
 
@@ -287,14 +304,14 @@ namespace PoolEngine
                 }
             }
             m_fastHitEdge.Clear();
-            if(m_fastBall.Count>0)
-            {
-                for (int i = 0; i < m_fastBall.Count; i++)
-                {
-                    m_fastBall[i].ball.UpdateBallPos(m_fastBall[i].deltaTime);//无任何碰撞直接更新位置
-                }
-            }
-            m_fastBall.Clear();
+            //if(m_fastBall.Count>0)
+            //{
+            //    for (int i = 0; i < m_fastBall.Count; i++)
+            //    {
+            //        m_fastBall[i].ball.UpdateBallPos(m_fastBall[i].deltaTime);//无任何碰撞直接更新位置
+            //    }
+            //}
+            //m_fastBall.Clear();
         }
 
         private int step = 0;
