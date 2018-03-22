@@ -29,25 +29,25 @@ namespace PoolEngine
 
         void CreateBalls()
         {
-            var ballObj = new BallObj(1,TSVector2.zero, new TSVector2(-1, 0).normalized,10,0.5);
+            var ballObj = new BallObj(1, new TSVector2(0, 2), new TSVector2(0, -1).normalized,1,0.5);
             balls.Add(ballObj);
 
-            ballObj = new BallObj(2, TSVector2.zero, new TSVector2(-1, 0).normalized, 5, 0.5);
-            //balls.Add(ballObj);
-
-            ballObj = new BallObj(3, new TSVector2(-2, 1), new TSVector2(-1, -1).normalized, 5, 0.5);
-            //balls.Add(ballObj);
-
-            ballObj = new BallObj(4, new TSVector2(2, 1), new TSVector2(-0.5, 0.3).normalized, 5, 0.5);
-            //balls.Add(ballObj);
-
-            ballObj = new BallObj(5, new TSVector2(2, 1), new TSVector2(-0.5, 0.6).normalized, 50, 0.5);
+            ballObj = new BallObj(2, new TSVector2(-4, 0), new TSVector2(1, 0).normalized, 2, 0.5);
             balls.Add(ballObj);
 
-            ballObj = new BallObj(6, new TSVector2(2, 1), new TSVector2(0.5, 0.3).normalized, 5, 0.5);
+            ballObj = new BallObj(3, new TSVector2(4, 0), new TSVector2(-1, 0).normalized, 2, 0.5);
+            balls.Add(ballObj);
+
+            ballObj = new BallObj(4, new TSVector2(2, 1), new TSVector2(-0.5, 0.3).normalized, 2, 0.5);
             //balls.Add(ballObj);
 
-            ballObj = new BallObj(7, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 5, 0.5);
+            ballObj = new BallObj(5, new TSVector2(2, 1), new TSVector2(-0.5, 0.6).normalized, 2, 0.5);
+            //balls.Add(ballObj);
+
+            ballObj = new BallObj(6, new TSVector2(2, 1), new TSVector2(0.5, 0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
+
+            ballObj = new BallObj(7, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
             //balls.Add(ballObj);
         }
         void CreateTable()

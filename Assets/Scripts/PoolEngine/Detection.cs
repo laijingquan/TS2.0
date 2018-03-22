@@ -1,5 +1,6 @@
 ﻿using System;
 using TrueSync;
+using UnityEngine;
 
 namespace PoolEngine
 {
@@ -82,10 +83,11 @@ namespace PoolEngine
                 return t /*/ (VAB * deltaTime).magnitude*/;//求出占比
             };
 
-            if (Idir_length_square < static_radius_square)//射线起点在圆心内部,相交
+            if (Idir_length_square + TSMath.Epsilon < static_radius_square)//射线起点在圆心内部,相交
             {
                 //_percent =  calHitInfo();
                 //_percent = 1;//一开始就相交的
+                Debug.Log("射线起点在圆心内部");
                 return false;
             }
             else//射线起点在圆心外部的情况
@@ -98,14 +100,14 @@ namespace PoolEngine
                 else
                 {
                     FP m_square = Idir_length_square - s * s;//球心到投影点距离的平方
-                    if (m_square > static_radius_square) //预测不相交
+                    if (m_square - static_radius_square > 0) //预测不相交
                     {
                         return false;
                     }
                     else
                     {
                         var t = calHitInfo();
-                        if(t<=VAB.magnitude)
+                        if(t-VAB.magnitude<= TSMath.Epsilon)
                         {
                             _percent = t / VAB.magnitude;
                             return true;
