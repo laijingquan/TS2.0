@@ -69,14 +69,12 @@ namespace PoolEngine
             TSVector2 Idir = staticCircle.cur_pos - runCircle.cur_pos;//射线起点到静态圆的方向
             FP Idir_length_square = TSVector2.Dot(Idir, Idir);
             FP static_radius_square = (staticCircle.radius * 2)* (staticCircle.radius * 2);
-
-            Func<FP> calHitInfo = () =>
+            Func<TSVector2,FP,FP> calHitInfo = (e_dir,a_projvalue) =>
             //可以在返回true的时候再计算，后优化
             {
-                TSVector2 e_dir = staticCircle.cur_pos - runCircle.cur_pos;
-                //TSVector2 d_dir = Idir/*runCircle.next_pos - runCircle.cur_pos*/;
-                //TSVector2 d_dirnormal = VAB.normalized;
-                FP a_projvalue = TSMath.Abs(TSVector2.Dot(e_dir, VAB.normalized));
+                //TSVector2 e_dir = staticCircle.cur_pos - runCircle.cur_pos;
+                //FP a_projvalue = TSMath.Abs(TSVector2.Dot(e_dir, VAB.normalized));
+                a_projvalue = TSMath.Abs(a_projvalue);
                 FP b_squar = TSVector2.Dot(e_dir, e_dir) - a_projvalue * a_projvalue;
                 FP f = TSMath.Sqrt(static_radius_square - b_squar);
                 FP t = a_projvalue - f;//碰撞到静态圆所走的路程，总路程是runCircle.cur_pos+VAB*delataTime;
@@ -92,22 +90,22 @@ namespace PoolEngine
             }
             else//射线起点在圆心外部的情况
             {
-                FP s = TSVector2.Dot(Idir, VAB.normalized);
-                if(s<0)//球体位于射线原点的后面 不相交
+                FP a_projvalue = TSVector2.Dot(Idir, VAB.normalized);
+                if(a_projvalue < 0)//球体位于射线原点的后面 不相交
                 {
                     return false;
                 }
                 else
                 {
-                    FP m_square = Idir_length_square - s * s;//球心到投影点距离的平方
+                    FP m_square = Idir_length_square - a_projvalue * a_projvalue;//球心到投影点距离的平方
                     if (m_square - static_radius_square > 0) //预测不相交
                     {
                         return false;
                     }
                     else
                     {
-                        var t = calHitInfo();
-                        if(t-VAB.magnitude<= TSMath.Epsilon)
+                        var t = calHitInfo(Idir, a_projvalue);
+                        if(t>=TSMath.Epsilon&& t-VAB.magnitude<= TSMath.Epsilon)
                         {
                             _percent = t / VAB.magnitude;
                             return true;
@@ -131,8 +129,8 @@ namespace PoolEngine
             //Se
             TSVector2 Se = PointToLineDir(tedge.start, tedge.end, crd.next_pos);
 
-            TSVector2 Scnormal = TSVector2.Normalize(Sc);
-            TSVector2 Senormal = TSVector2.Normalize(Se);
+            TSVector2 Scnormal = Sc.normalized;
+            TSVector2 Senormal = Se.normalized;
             //TSVector2 Scnormal = Sc.normalized;
             //TSVector2 Senormal = Se.normalized;
             //只有两种结果 同向和 反向
@@ -160,7 +158,7 @@ namespace PoolEngine
                 //TSVector2 sce = Sc - Se;
                 //FP S = TSMath.Sqrt( TSVector2.Dot(sce, sce));
                 t_percent = (Scnorm - crd.radius) / S;//圆心到达撞击点的距离/圆心经过的总距离 来求出时间占比
-                return true;
+                return t_percent>=0?true:false;
             }
         }
 
@@ -293,6 +291,24 @@ namespace PoolEngine
             {                                    // 其它情况，两条线段相交。
                 return true;
             }
+        }
+
+        /// <summary>
+        /// 检查圆是否靠近某一边
+        /// </summary>
+        /// <param name="E1"></param>
+        /// <param name="E2"></param>
+        /// <param name="cur_pos"></param>
+        /// <param name="next_pos"></param>
+        /// <returns></returns>
+        public static bool CheckCloseEdge(TSVector2 E1,TSVector2 E2,TSVector2 cur_pos,TSVector2 next_pos)
+        {
+            var perpendicular_cur_pos = PointToLineDir(E1, E2, cur_pos);
+            var perpendicularA_next_pos = PointToLineDir(E1, E2, next_pos);
+            var dotResult = TSVector2.Dot(perpendicular_cur_pos, perpendicularA_next_pos);
+            if (perpendicularA_next_pos.magnitude < perpendicular_cur_pos.magnitude || dotResult<0)//靠近边的条件
+                return true;
+            return false;
         }
         #endregion
     }

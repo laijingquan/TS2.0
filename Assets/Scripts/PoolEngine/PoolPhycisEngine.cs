@@ -29,14 +29,14 @@ namespace PoolEngine
 
         void CreateBalls()
         {
-            var ballObj = new BallObj(1, new TSVector2(0, 2), new TSVector2(0, -1).normalized,1,0.5);
+            var ballObj = new BallObj(1, new TSVector2(0, 2), new TSVector2(0, -1).normalized,100,0.5);
             balls.Add(ballObj);
 
-            ballObj = new BallObj(2, new TSVector2(-4, 0), new TSVector2(1, 0).normalized, 2, 0.5);
+            ballObj = new BallObj(2, new TSVector2(-4, 0), new TSVector2(1, 0).normalized, 3, 0.5);
             balls.Add(ballObj);
 
-            ballObj = new BallObj(3, new TSVector2(4, 0), new TSVector2(-1, 0).normalized, 2, 0.5);
-            balls.Add(ballObj);
+            ballObj = new BallObj(3, new TSVector2(4, 0), new TSVector2(-1, 0).normalized, 5, 0.5);
+            //balls.Add(ballObj);
 
             ballObj = new BallObj(4, new TSVector2(2, 1), new TSVector2(-0.5, 0.3).normalized, 2, 0.5);
             //balls.Add(ballObj);
@@ -48,6 +48,18 @@ namespace PoolEngine
             //balls.Add(ballObj);
 
             ballObj = new BallObj(7, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
+
+            ballObj = new BallObj(8, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+           // balls.Add(ballObj);
+
+            ballObj = new BallObj(9, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
+
+            ballObj = new BallObj(10, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+           // balls.Add(ballObj);
+
+            ballObj = new BallObj(11, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
             //balls.Add(ballObj);
         }
         void CreateTable()
@@ -81,10 +93,11 @@ namespace PoolEngine
         // Update is called once per frame
         public void Update(FP deltaTime)
         {
+            //UpdatePhysicStep(deltaTime);//逻辑层
             fixedTime += deltaTime;
-            while(fixedTime>=0.02)
+            while (fixedTime >= 0.01)
             {
-                fixedTime -= 0.02;
+                fixedTime -= 0.01;
                 if (control)
                     UpdatePhysicStep(deltaTime);//逻辑层
             }
@@ -209,17 +222,18 @@ namespace PoolEngine
 
                     if (fastHitBalls.Count > 0)
                     {
-                        fastHitBalls = fastHitBalls.OrderBy((m) => m.t_percent).ToList();//碰撞集合中，抽取时间最短的碰撞
+                        //这里有问题 应该是按时间排序
+                        fastHitBalls = fastHitBalls.OrderBy((m) =>  m.runballObj.deltaTime*m.t_percent ).ToList();//碰撞集合中，抽取时间最短的碰撞
                         //更新俩球的碰撞位置和方向
                         //updateDirAndTimeByBall(fastHitBalls[0].t_percent, fastHitBalls[0].runballObj, fastHitBalls[0].staticballObj);
-                        m_fastHitBall.Add(fastHitBalls[0]);
-                        checkballs.Remove(fastHitBalls[0].runballObj);
-                        checkballs.Remove(fastHitBalls[0].staticballObj);
-                        fastHitBalls[0].runballObj.lockcheck = true;
-                        fastHitBalls[0].staticballObj.lockcheck = true;
+                        //m_fastHitBall.Add(fastHitBalls[0]);
+                        //checkballs.Remove(fastHitBalls[0].runballObj);
+                        //checkballs.Remove(fastHitBalls[0].staticballObj);
+                        //fastHitBalls[0].runballObj.lockcheck = true;
+                        //fastHitBalls[0].staticballObj.lockcheck = true;
 
                         checkCollide = true;
-                        continue;//发生球碰撞就不需要检测和边的碰撞，直接跳出。
+                        //continue;//发生球碰撞就不需要检测和边的碰撞，直接跳出。
                     }
 
                     #endregion
@@ -231,42 +245,62 @@ namespace PoolEngine
                     //    Debug.Log("大于3次检测");
                     //}
                     //step = false;
-                    var next_pos = ball.PredictPos();//预测经过deltaTime后的位置
-                    crd.cur_pos = ball.cur_pos;
-                    crd.next_pos = next_pos;
-                    crd.radius = ball.radius;
+                    //var next_pos = ball.PredictPos();//预测经过deltaTime后的位置
+                    //crd.cur_pos = ball.cur_pos;
+                    //crd.next_pos = next_pos;
+                    //crd.radius = ball.radius;
 
                     FP t_percent = 0;
 
-                    TSVector2 predictEndPos = ball.cur_pos + ball.moveDir * 100;
+                    TSVector2 predictEndPos = ball.cur_pos + ball.moveDir*100;
 
                     //bool isflag = false;
                     List<fastEdge> fastedges = new List<fastEdge>();
                     //在当前速度下,预测圆最先和哪条边碰撞
                     for (int i = 0; i < tableEdges.Length; i++)
                     {
-                        if (Detection.CheckSegement_Contact(ball.cur_pos, predictEndPos, tableEdges[i].farstart, tableEdges[i].farend))
+                        //if (Detection.CheckSegement_Contact(ball.cur_pos, predictEndPos, tableEdges[i].farstart, tableEdges[i].farend))//这个检测是去掉在挨着边但运动方向相反的情况
+                        if(Detection.CheckCloseEdge(tableEdges[i].start,tableEdges[i].end,ball.cur_pos,predictEndPos))
                         {
 
-                            if (Detection.CheckCircle_LineContact(tableEdges[i], crd, ref t_percent))
+                            if (Detection.CheckCircle_LineContact(tableEdges[i], run_crd, ref t_percent))
                             {
                                 fastedges.Add(new fastEdge(ball,tableEdges[i], t_percent));
                             }
-                        }
+                       }
                     }
                     //有碰撞集合,找到最先的碰撞点
                     if (fastedges.Count > 0)
                     {
-                        fastedges = fastedges.OrderBy((x) => x.t_percent).ToList();
-                        //isflag = true;//还要继续step
-                        //updateDirAndTimeByEdge( fastedges[0].t_percent, fastedges[0].tbe, ball);//更新位置，并且由于撞击而更改速度方向
-                        m_fastHitEdge.Add(fastedges[0]);
+                        fastedges = fastedges.OrderBy((x) => x.t_percent * x.ball.deltaTime).ToList();
+
+                        if(fastHitBalls.Count>0&&fastHitBalls[0].t_percent*fastHitBalls[0].runballObj.deltaTime<fastedges[0].t_percent*fastedges[0].ball.deltaTime)
+                        {
+                            m_fastHitBall.Add(fastHitBalls[0]);
+                            checkballs.Remove(fastHitBalls[0].runballObj);
+                            checkballs.Remove(fastHitBalls[0].staticballObj);
+                            fastHitBalls[0].runballObj.lockcheck = true;
+                            fastHitBalls[0].staticballObj.lockcheck = true;
+                        }
+                        else
+                        {
+                            m_fastHitEdge.Add(fastedges[0]);
+                        }
                         checkCollide = true;
                     }
                     //无碰撞,直接更新
                     else
                     {
-                        m_fastBall.Add(new fastBall(ball, ball.deltaTime));
+                        if (fastHitBalls.Count > 0)
+                        {
+                            m_fastHitBall.Add(fastHitBalls[0]);
+                            checkballs.Remove(fastHitBalls[0].runballObj);
+                            checkballs.Remove(fastHitBalls[0].staticballObj);
+                            fastHitBalls[0].runballObj.lockcheck = true;
+                            fastHitBalls[0].staticballObj.lockcheck = true;
+                        }
+                        else
+                            m_fastBall.Add(new fastBall(ball, ball.deltaTime));
                         //ball.UpdateBallPos(ball.deltaTime);//无任何碰撞直接更新位置
                     }
                 }
@@ -325,7 +359,7 @@ namespace PoolEngine
         //private TSVector2 moveDir = TSVector2.zero;
         //private FP moveSpeed = 10;
 
-        CircleRunData crd = new CircleRunData();
+        //CircleRunData crd = new CircleRunData();
         private List<fastHitBall> m_fastHitBall = new List<fastHitBall>();
         private List<fastEdge> m_fastHitEdge = new List<fastEdge>();
         private List<fastBall> m_fastBall = new List<fastBall>();

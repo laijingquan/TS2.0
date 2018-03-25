@@ -87,7 +87,7 @@ namespace PoolEngine
                             Gizmos.DrawLine(ToXZ(tbg.start), ToXZ(tbg.end));
                     }
                 }
-
+                if (balls == null) return;
                 for(int i=0; i < balls.Count;i++)
                 {
                     var ball = balls[i];
