@@ -62,7 +62,17 @@ namespace PoolEngine
             deltaTime -= _deltaTime;//更新剩余时间
             if (deltaTime < 0)
                 deltaTime = 0;
-            //CheckBound();
+            CheckBound();
+        }
+
+        void CheckBound()
+        {
+            var x = TSMath.Abs(cur_pos.x);
+            var y = TSMath.Abs(cur_pos.y);
+            if(x>4.6||y>2.1)
+            {
+                Debug.Log("出界le ");
+            }
         }
 
         public BallObj(BallObj other)

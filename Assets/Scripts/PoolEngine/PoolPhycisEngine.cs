@@ -90,16 +90,17 @@ namespace PoolEngine
 
         private bool control = true;
         private FP fixedTime=0;
+        private FP stepTime = 0.01;
         // Update is called once per frame
         public void Update(FP deltaTime)
         {
             //UpdatePhysicStep(deltaTime);//逻辑层
             fixedTime += deltaTime;
-            while (fixedTime >= 0.01)
+            while (fixedTime >= stepTime)
             {
-                fixedTime -= 0.01;
+                fixedTime -= stepTime;
                 if (control)
-                    UpdatePhysicStep(deltaTime);//逻辑层
+                    UpdatePhysicStep(stepTime);//逻辑层
             }
         }
 
@@ -237,19 +238,7 @@ namespace PoolEngine
                     }
 
                     #endregion
-                    //step = true;
                     #region 边检测
-                    //testnumber++;
-                    //if (testnumber > 3)
-                    //{
-                    //    Debug.Log("大于3次检测");
-                    //}
-                    //step = false;
-                    //var next_pos = ball.PredictPos();//预测经过deltaTime后的位置
-                    //crd.cur_pos = ball.cur_pos;
-                    //crd.next_pos = next_pos;
-                    //crd.radius = ball.radius;
-
                     FP t_percent = 0;
 
                     TSVector2 predictEndPos = ball.cur_pos + ball.moveDir*100;
@@ -269,7 +258,7 @@ namespace PoolEngine
                             }
                        }
                     }
-                    //有碰撞集合,找到最先的碰撞点
+                    //如果和边和球都有碰撞集合,找到最先的碰撞点
                     if (fastedges.Count > 0)
                     {
                         fastedges = fastedges.OrderBy((x) => x.t_percent * x.ball.deltaTime).ToList();
@@ -288,7 +277,7 @@ namespace PoolEngine
                         }
                         checkCollide = true;
                     }
-                    //无碰撞,直接更新
+                    //和边没有碰撞，那么就看和球有无碰撞，如果没碰撞就直接更新位置
                     else
                     {
                         if (fastHitBalls.Count > 0)
@@ -298,14 +287,14 @@ namespace PoolEngine
                             checkballs.Remove(fastHitBalls[0].staticballObj);
                             fastHitBalls[0].runballObj.lockcheck = true;
                             fastHitBalls[0].staticballObj.lockcheck = true;
+                            checkCollide = true;//差点漏了，可能会导致球出界
                         }
-                        else
-                            m_fastBall.Add(new fastBall(ball, ball.deltaTime));
+                        //else
+                        //    m_fastBall.Add(new fastBall(ball, ball.deltaTime));
                         //ball.UpdateBallPos(ball.deltaTime);//无任何碰撞直接更新位置
                     }
                 }
                 #endregion
-                ProcessHitData();
                 if (!checkCollide)
                 {
                     //没有碰撞了,检查所有球是否有剩余时间，直接走完跳出
@@ -317,6 +306,8 @@ namespace PoolEngine
                     }
                     break;
                 }
+                else
+                    ProcessHitData();
             }
         }
 

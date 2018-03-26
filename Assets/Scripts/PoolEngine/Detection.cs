@@ -85,7 +85,7 @@ namespace PoolEngine
             {
                 //_percent =  calHitInfo();
                 //_percent = 1;//一开始就相交的
-                Debug.Log("射线起点在圆心内部");
+                //Debug.Log("射线起点在圆心内部");
                 return false;
             }
             else//射线起点在圆心外部的情况
