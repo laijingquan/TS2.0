@@ -51,13 +51,13 @@ namespace PoolEngine
             //balls.Add(ballObj);
 
             ballObj = new BallObj(8, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-           // balls.Add(ballObj);
+            //balls.Add(ballObj);
 
             ballObj = new BallObj(9, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
             //balls.Add(ballObj);
 
             ballObj = new BallObj(10, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-           // balls.Add(ballObj);
+            //balls.Add(ballObj);
 
             ballObj = new BallObj(11, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
             //balls.Add(ballObj);
@@ -227,7 +227,8 @@ namespace PoolEngine
                         fastHitBalls = fastHitBalls.OrderBy((m) =>  m.runballObj.deltaTime*m.t_percent ).ToList();//碰撞集合中，抽取时间最短的碰撞
                         //更新俩球的碰撞位置和方向
                         //updateDirAndTimeByBall(fastHitBalls[0].t_percent, fastHitBalls[0].runballObj, fastHitBalls[0].staticballObj);
-                        //m_fastHitBall.Add(fastHitBalls[0]);
+                        m_fastHitBall.Add(fastHitBalls[0]);
+                        fastHitBalls.Clear();
                         //checkballs.Remove(fastHitBalls[0].runballObj);
                         //checkballs.Remove(fastHitBalls[0].staticballObj);
                         //fastHitBalls[0].runballObj.lockcheck = true;
@@ -262,39 +263,13 @@ namespace PoolEngine
                     if (fastedges.Count > 0)
                     {
                         fastedges = fastedges.OrderBy((x) => x.t_percent * x.ball.deltaTime).ToList();
-
-                        if(fastHitBalls.Count>0&&fastHitBalls[0].t_percent*fastHitBalls[0].runballObj.deltaTime<fastedges[0].t_percent*fastedges[0].ball.deltaTime)
-                        {
-                            m_fastHitBall.Add(fastHitBalls[0]);
-                            checkballs.Remove(fastHitBalls[0].runballObj);
-                            checkballs.Remove(fastHitBalls[0].staticballObj);
-                            fastHitBalls[0].runballObj.lockcheck = true;
-                            fastHitBalls[0].staticballObj.lockcheck = true;
-                        }
-                        else
-                        {
-                            m_fastHitEdge.Add(fastedges[0]);
-                        }
+                        m_fastHitEdge.Add(fastedges[0]);
+                        fastedges.Clear();
                         checkCollide = true;
-                    }
-                    //和边没有碰撞，那么就看和球有无碰撞，如果没碰撞就直接更新位置
-                    else
-                    {
-                        if (fastHitBalls.Count > 0)
-                        {
-                            m_fastHitBall.Add(fastHitBalls[0]);
-                            checkballs.Remove(fastHitBalls[0].runballObj);
-                            checkballs.Remove(fastHitBalls[0].staticballObj);
-                            fastHitBalls[0].runballObj.lockcheck = true;
-                            fastHitBalls[0].staticballObj.lockcheck = true;
-                            checkCollide = true;//差点漏了，可能会导致球出界
-                        }
-                        //else
-                        //    m_fastBall.Add(new fastBall(ball, ball.deltaTime));
-                        //ball.UpdateBallPos(ball.deltaTime);//无任何碰撞直接更新位置
                     }
                 }
                 #endregion
+                ProcessHitData();
                 if (!checkCollide)
                 {
                     //没有碰撞了,检查所有球是否有剩余时间，直接走完跳出
@@ -306,37 +281,134 @@ namespace PoolEngine
                     }
                     break;
                 }
-                else
-                    ProcessHitData();
             }
         }
 
+        /// <summary>
+        /// 处理所有的碰撞记录
+        /// </summary>
         void ProcessHitData()
         {
+            //将所有的碰撞点都收集起来，再剔除不可能的情况
             if(m_fastHitBall.Count>0)
             {
                 for(int i =0; i < m_fastHitBall.Count;i++)
                 {
+                    var myfastHitBall = m_fastHitBall[i];
+                    for(int j = 0; j < m_fastHitBall.Count;j++)
+                    {
+                        var otherfastHitBall = m_fastHitBall[j];
+                        if (myfastHitBall == otherfastHitBall) continue;
+                        //检测另一方是否有不同的碰撞情况,如果有,那么可能是和其他球碰撞或者和某一边碰撞，如果花费的时间更少，那么就选择时间少的，剔除时间多的。
+                        if (otherfastHitBall.runballObj==myfastHitBall.staticballObj)
+                        {
+                            //检测双方的碰撞对是否一致,如果不一致那么再比较时间来决定这条碰撞记录是否有效
+                            if (otherfastHitBall.staticballObj != myfastHitBall.runballObj)
+                            {
+                                //该碰撞记录花费时间更短，碰撞有效
+                                if(myfastHitBall.runballObj.deltaTime*myfastHitBall.t_percent<otherfastHitBall.runballObj.deltaTime*otherfastHitBall.t_percent)
+                                {
+                                    m_fastHitBall.Remove(otherfastHitBall);//对应着，另外一条记录无效
+                                }
+                                //该碰撞记录花费时间更短，碰撞无效
+                                else
+                                {
+                                    m_fastHitBall.Remove(myfastHitBall);//对应着，另外一条记录无效
+                                }
+                                break;
+                            }
+                            //一致的话 只需要选择其中一条记录即可
+                            else
+                            {
+                                m_fastHitBall.Remove(otherfastHitBall);//对应着，另外一条记录无效
+                            }
+
+                            ////检测是否和边有碰撞并且消耗时间更短
+                            //if(m_fastHitEdge.Count > 0)
+                            //{
+                            //    for (int k= 0; k < m_fastHitEdge.Count; k++)
+                            //    {
+                            //        var myfastHitEdge = m_fastHitEdge[k];
+                            //        if(myfastHitEdge.ball==otherfastHitBall.runballObj&&myfastHitEdge.ball.deltaTime*myfastHitEdge.t_percent<otherfastHitBall.t_percent*otherfastHitBall.runballObj.deltaTime)
+                            //        {
+                            //            isValid = false;
+                            //            goto CheckEnd;
+                            //        }
+                            //    }
+                            //}
+                        }
+
+
+                    }
+
+                    //CheckEnd:
+                    //if(isValid)
+                    //    updateDirAndTimeByBall(m_fastHitBall[i].t_percent, m_fastHitBall[i].runballObj, m_fastHitBall[i].staticballObj);
+                }
+            }
+            /*            m_fastHitBall.Clear();*/
+
+            //再和边的碰撞集合对比
+            if (m_fastHitBall.Count > 0)
+            {
+                for (int i = 0; i < m_fastHitBall.Count; i++)
+                {
+                    var myfastHitBall = m_fastHitBall[i];
+                    for (int k = 0; k < m_fastHitEdge.Count; k++)
+                    {
+                        var myfastHitEdge = m_fastHitEdge[k];
+
+                        if (myfastHitEdge.ball == myfastHitBall.runballObj)
+                        {
+                            //边的碰撞记录花费时间更短
+                            if (myfastHitEdge.ball.deltaTime * myfastHitEdge.t_percent < myfastHitBall.t_percent * myfastHitBall.runballObj.deltaTime)
+                            {
+                                m_fastHitBall.Remove(myfastHitBall);//删除球和球碰撞记录
+                            }
+                            //边的碰撞记录花费时间更长
+                            else
+                            {
+                                m_fastHitEdge.Remove(myfastHitEdge);//删除球和边的碰撞记录
+                            }
+                            break;
+                        }
+                    }
+                }
+                for (int i = 0; i < m_fastHitBall.Count; i++)
+                {
                     updateDirAndTimeByBall(m_fastHitBall[i].t_percent, m_fastHitBall[i].runballObj, m_fastHitBall[i].staticballObj);
                 }
             }
-            m_fastHitBall.Clear();
-            if (m_fastHitEdge.Count>0)
+
+            //仅仅剩余边的碰撞集合，无需考虑球和球的碰撞集合
+
+            if (m_fastHitEdge.Count > 0)
             {
                 for (int i = 0; i < m_fastHitEdge.Count; i++)
                 {
                     updateDirAndTimeByEdge(m_fastHitEdge[i].t_percent, m_fastHitEdge[i].tbe, m_fastHitEdge[i].ball);//更新位置，并且由于撞击而更改速度方向
                 }
             }
+
+            m_fastHitBall.Clear();
             m_fastHitEdge.Clear();
-            //if(m_fastBall.Count>0)
-            //{
-            //    for (int i = 0; i < m_fastBall.Count; i++)
-            //    {
-            //        m_fastBall[i].ball.UpdateBallPos(m_fastBall[i].deltaTime);//无任何碰撞直接更新位置
-            //    }
-            //}
-            //m_fastBall.Clear();
+        }
+
+        public bool CheckEdgeCollide(TSVector2 E1, TSVector2 E2, TSVector2 cur_pos, TSVector2 next_pos,CircleRunData run_crd,ref FP t_percent)
+        {
+            //在当前速度下,预测圆最先和哪条边碰撞
+            for (int i = 0; i < tableEdges.Length; i++)
+            {
+                if (Detection.CheckCloseEdge(E1,E2,cur_pos,next_pos))
+                {
+
+                    if (Detection.CheckCircle_LineContact(tableEdges[i], run_crd, ref t_percent))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         private int step = 0;
