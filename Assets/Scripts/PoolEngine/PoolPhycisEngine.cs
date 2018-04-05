@@ -36,31 +36,31 @@ namespace PoolEngine
             balls.Add(ballObj);
 
             ballObj = new BallObj(3, new TSVector2(4, 0), new TSVector2(-1, 0).normalized, 5, 0.5);
-            //balls.Add(ballObj);
+            balls.Add(ballObj);
 
             ballObj = new BallObj(4, new TSVector2(2, 1), new TSVector2(-0.5, 0.3).normalized, 2, 0.5);
-            //balls.Add(ballObj);
+            balls.Add(ballObj);
 
             ballObj = new BallObj(5, new TSVector2(2, 1), new TSVector2(-0.5, 0.6).normalized, 2, 0.5);
-            //balls.Add(ballObj);
+            balls.Add(ballObj);
 
             ballObj = new BallObj(6, new TSVector2(2, 1), new TSVector2(0.5, 0.3).normalized, 2, 0.5);
-            //balls.Add(ballObj);
+            balls.Add(ballObj);
 
             ballObj = new BallObj(7, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            //balls.Add(ballObj);
+            balls.Add(ballObj);
 
             ballObj = new BallObj(8, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            //balls.Add(ballObj);
+            balls.Add(ballObj);
 
             ballObj = new BallObj(9, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            //balls.Add(ballObj);
+            balls.Add(ballObj);
 
             ballObj = new BallObj(10, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            //balls.Add(ballObj);
+            balls.Add(ballObj);
 
             ballObj = new BallObj(11, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            //balls.Add(ballObj);
+            balls.Add(ballObj);
         }
         void CreateTable()
         {
@@ -169,15 +169,16 @@ namespace PoolEngine
         {
             //bool step = true;
             step++;
-            AddTestData(step,balls);
-            ClearTestData();
+            //AddTestData(step,balls);
+            //ClearTestData();
 
             for (int k = 0; k < balls.Count; k++)
             {
                 var ball = balls[k];
                 ball.deltaTime = _deltaTime;
+                ball.lockcheck = false;
             }
-            bool checkCollide = false;
+            //bool checkCollide = false;
             testnumber = 0;
             while (true)
             {
@@ -190,28 +191,19 @@ namespace PoolEngine
                         break;
                     }
                 }
-                checkCollide = false;
-                var checkballs = new List<BallObj>(balls);
+
                 for (int k = 0; k < balls.Count; k++)
                 {
                     var ball = balls[k];
-                    ball.lockcheck = false;
-                }
-
-                for (int k = 0; k < checkballs.Count; k++)
-                {
-                    var ball = checkballs[k];
-                    if (ball.lockcheck||ball.deltaTime<=0)
+                    if (ball.deltaTime<=0)
                         break;
-                    //var deltaTime = _deltaTime;
                     var deltaTime = ball.deltaTime;//每个球的剩余的时长是不一样的
-                    //var _step = true;
-                    List<fastHitBall> fastHitBalls = new List<fastHitBall>();
+                    List<BaseHit> fastHitBalls = new List<BaseHit>();
                     #region 球碰撞检测
                     CircleRunData run_crd = new CircleRunData(ball.cur_pos, ball.PredictPos(), ball.radius);
-                    for (int j = 0; j < checkballs.Count; j++)
+                    for (int j = 0; j < balls.Count; j++)
                     {
-                        var otherball = checkballs[j];
+                        var otherball = balls[j];
                         if (otherball == ball) continue;
                         FP _percent = 0;
                         CircleRunData static_crd = new CircleRunData(otherball.cur_pos, otherball.PredictPos(), otherball.radius);
@@ -223,19 +215,9 @@ namespace PoolEngine
 
                     if (fastHitBalls.Count > 0)
                     {
-                        //这里有问题 应该是按时间排序
-                        fastHitBalls = fastHitBalls.OrderBy((m) =>  m.runballObj.deltaTime*m.t_percent ).ToList();//碰撞集合中，抽取时间最短的碰撞
-                        //更新俩球的碰撞位置和方向
-                        //updateDirAndTimeByBall(fastHitBalls[0].t_percent, fastHitBalls[0].runballObj, fastHitBalls[0].staticballObj);
-                        m_fastHitBall.Add(fastHitBalls[0]);
-                        fastHitBalls.Clear();
-                        //checkballs.Remove(fastHitBalls[0].runballObj);
-                        //checkballs.Remove(fastHitBalls[0].staticballObj);
-                        //fastHitBalls[0].runballObj.lockcheck = true;
-                        //fastHitBalls[0].staticballObj.lockcheck = true;
-
-                        checkCollide = true;
-                        //continue;//发生球碰撞就不需要检测和边的碰撞，直接跳出。
+                        //fastHitBalls = fastHitBalls.OrderBy((m) =>  m.CalRunBallHitTime() ).ToList();//碰撞集合中，抽取时间最短的碰撞
+                        //collectHits.Add(fastHitBalls[0]);
+                        CollectBallPairList(fastHitBalls);
                     }
 
                     #endregion
@@ -245,7 +227,7 @@ namespace PoolEngine
                     TSVector2 predictEndPos = ball.cur_pos + ball.moveDir*100;
 
                     //bool isflag = false;
-                    List<fastEdge> fastedges = new List<fastEdge>();
+                    List<BaseHit> fastedges = new List<BaseHit>();
                     //在当前速度下,预测圆最先和哪条边碰撞
                     for (int i = 0; i < tableEdges.Length; i++)
                     {
@@ -262,18 +244,31 @@ namespace PoolEngine
                     //如果和边和球都有碰撞集合,找到最先的碰撞点
                     if (fastedges.Count > 0)
                     {
-                        fastedges = fastedges.OrderBy((x) => x.t_percent * x.ball.deltaTime).ToList();
-                        m_fastHitEdge.Add(fastedges[0]);
-                        fastedges.Clear();
-                        checkCollide = true;
+                        //fastedges = fastedges.OrderBy((x) => x.CalHitTime()).ToList();
+                        //if(fastHitBalls.Count<=0|| fastHitBalls[0].CalRunBallHitTime()>fastedges[0].CalHitTime())//边碰撞花费时间更少的话
+                        //{
+                        //    if(fastHitBalls.Count>0)
+                        //        collectHits.Remove(fastHitBalls[0]);
+                        //    collectHits.Add(fastedges[0]);
+                        //    bool outbound = ball.CalBallPos(fastedges[0].CalHitTime());
+                        //    if(outbound)
+                        //    {
+                        //        Debug.Log("无语");
+                        //    }
+                        //    //checkCollide = true;
+                        //}
+                        CollectBallPairList(fastedges);
                     }
+                    fastHitBalls.Clear();
+                    fastedges.Clear();
                 }
                 #endregion
-                ProcessHitData();
-                if (!checkCollide)
+                if(ballPairHit.Count>0)
+                    ProcessHitData();
+                else
                 {
                     //没有碰撞了,检查所有球是否有剩余时间，直接走完跳出
-                    for(int i =0; i < balls.Count;i++)
+                    for (int i = 0; i < balls.Count; i++)
                     {
                         var nothitBall = balls[i];
                         if (nothitBall.deltaTime > 0)
@@ -281,135 +276,283 @@ namespace PoolEngine
                     }
                     break;
                 }
+                //if (!checkCollide)
+                //{
+                //    //没有碰撞了,检查所有球是否有剩余时间，直接走完跳出
+                //    for(int i =0; i < balls.Count;i++)
+                //    {
+                //        var nothitBall = balls[i];
+                //        if (nothitBall.deltaTime > 0)
+                //            nothitBall.UpdateBallPos(nothitBall.deltaTime);
+                //    }
+                //    break;
+                //}
             }
         }
 
+        private List<fastHitBall> destroy_m_fastHitBall = new List<fastHitBall>();
+        private List<fastEdge> destroy_m_fastEdge = new List<fastEdge>();
+
+        //void CollectBallPair(BaseHit one,BaseHit other)
+        //{
+        //    var data = new List<BaseHit>() { one, other };
+        //    ballPairHit.Add(pairBallKey++, data);
+        //}
+        void UnLockBalls()
+        {
+            for (int k = 0; k < balls.Count; k++)
+            {
+                var ball = balls[k];
+                ball.lockcheck = false;
+            }
+        }
+        void CollectBallPairList(List<BaseHit> baseHitList)
+        {
+            for(int i =0; i < baseHitList.Count;i++)
+            {
+                CollectBallPairSingle(baseHitList[i]);
+            }
+        }
+
+        void CollectBallPairSingle(BaseHit baseHit)
+        {
+            if(baseHit.hitType==HitType.Ball)
+            {
+                var _baseHit = baseHit as fastHitBall;
+                if(ballPairHit.ContainsKey(_baseHit.runballObj.ID))
+                {
+                    ballPairHit[_baseHit.runballObj.ID].Add(_baseHit);
+                }
+                else
+                {
+                    ballPairHit.Add(_baseHit.runballObj.ID, new List<BaseHit>() { baseHit});
+                }
+            }
+            else if(baseHit.hitType==HitType.Edge)
+            {
+                var _baseHit = baseHit as fastEdge;
+                if (ballPairHit.ContainsKey(_baseHit.ball.ID))
+                {
+                    ballPairHit[_baseHit.ball.ID].Add(_baseHit);
+                }
+                else
+                {
+                    ballPairHit.Add(_baseHit.ball.ID, new List<BaseHit>() { baseHit });
+                }
+            }
+        }
         /// <summary>
         /// 处理所有的碰撞记录
         /// </summary>
         void ProcessHitData()
         {
-            //将所有的碰撞点都收集起来，再剔除不可能的情况
-            if(m_fastHitBall.Count>0)
+            foreach(var ballpair in ballPairHit)//每个球对应的碰撞记录集合
             {
-                for(int i =0; i < m_fastHitBall.Count;i++)
+                int ID = ballpair.Key;
+                var baseHits = ballpair.Value;
+                for(int i =0; i < baseHits.Count;i++)//其中一个球的碰撞记录集合
                 {
-                    var myfastHitBall = m_fastHitBall[i];
-                    for(int j = 0; j < m_fastHitBall.Count;j++)
+                    var baseHit = baseHits[i];
+                    if(baseHit.hitType==HitType.Ball)
                     {
-                        var otherfastHitBall = m_fastHitBall[j];
-                        if (myfastHitBall == otherfastHitBall) continue;
-                        //检测另一方是否有不同的碰撞情况,如果有,那么可能是和其他球碰撞或者和某一边碰撞，如果花费的时间更少，那么就选择时间少的，剔除时间多的。
-                        if (otherfastHitBall.runballObj==myfastHitBall.staticballObj)
+                        var _baseHit = baseHit as fastHitBall;
+                        int otherID = _baseHit.staticballObj.ID;
+                        if (ballPairHit.ContainsKey(otherID))
                         {
-                            //检测双方的碰撞对是否一致,如果不一致那么再比较时间来决定这条碰撞记录是否有效
-                            if (otherfastHitBall.staticballObj != myfastHitBall.runballObj)
+                            var other_baseHits = ballPairHit[otherID];
+                            for(int j = 0; j<other_baseHits.Count;j++)
                             {
-                                //该碰撞记录花费时间更短，碰撞有效
-                                if(myfastHitBall.runballObj.deltaTime*myfastHitBall.t_percent<otherfastHitBall.runballObj.deltaTime*otherfastHitBall.t_percent)
+                                var otherHit = other_baseHits[j];
+                                if(otherHit.hitType==HitType.Ball)
                                 {
-                                    m_fastHitBall.Remove(otherfastHitBall);//对应着，另外一条记录无效
+                                    var _otherHit = otherHit as fastHitBall;
+                                    if (_baseHit.runballObj.ID == _otherHit.staticballObj.ID)
+                                    {
+                                        continue;
+                                    }
+                                    else
+                                    {
+                                        if(/*_baseHit.CalHitTime()*/_baseHit.t_percent*_baseHit.staticballObj.deltaTime>_otherHit.CalHitTime())
+                                        {
+                                            _baseHit.valid = false;
+                                        }
+                                    }
                                 }
-                                //该碰撞记录花费时间更短，碰撞无效
                                 else
                                 {
-                                    m_fastHitBall.Remove(myfastHitBall);//对应着，另外一条记录无效
+                                    var _otherHit = otherHit as fastEdge;
+                                    if (/*_baseHit.CalHitTime()*/ _baseHit.t_percent * _baseHit.staticballObj.deltaTime > _otherHit.CalHitTime())
+                                    {
+                                        _baseHit.valid = false;
+                                    }
                                 }
-                                break;
                             }
-                            //一致的话 只需要选择其中一条记录即可
-                            else
-                            {
-                                m_fastHitBall.Remove(otherfastHitBall);//对应着，另外一条记录无效
-                            }
-
-                            ////检测是否和边有碰撞并且消耗时间更短
-                            //if(m_fastHitEdge.Count > 0)
-                            //{
-                            //    for (int k= 0; k < m_fastHitEdge.Count; k++)
-                            //    {
-                            //        var myfastHitEdge = m_fastHitEdge[k];
-                            //        if(myfastHitEdge.ball==otherfastHitBall.runballObj&&myfastHitEdge.ball.deltaTime*myfastHitEdge.t_percent<otherfastHitBall.t_percent*otherfastHitBall.runballObj.deltaTime)
-                            //        {
-                            //            isValid = false;
-                            //            goto CheckEnd;
-                            //        }
-                            //    }
-                            //}
                         }
-
-
-                    }
-
-                    //CheckEnd:
-                    //if(isValid)
-                    //    updateDirAndTimeByBall(m_fastHitBall[i].t_percent, m_fastHitBall[i].runballObj, m_fastHitBall[i].staticballObj);
+                        else
+                            Debug.Log("一般碰撞对都是成对记录出现,不可能走到这!");
+                    }                   
                 }
             }
-            /*            m_fastHitBall.Clear();*/
 
-            //再和边的碰撞集合对比
-            if (m_fastHitBall.Count > 0)
+            foreach (var ballpair in ballPairHit)
             {
-                for (int i = 0; i < m_fastHitBall.Count; i++)
+                int ID = ballpair.Key;
+                var baseHits = ballpair.Value.OrderBy((m)=>m.CalHitTime()).ToList();//按时间来排序
+
+                BaseHit baseHit=null;
+                for(int i = 0; i < baseHits.Count;i++)
                 {
-                    var myfastHitBall = m_fastHitBall[i];
-                    for (int k = 0; k < m_fastHitEdge.Count; k++)
+                    if (baseHits[i].valid == false) continue;
+                    baseHit = baseHits[i];
+                    break;
+                }
+
+
+                if (baseHit!=null&&baseHit.valid == true && !baseHit.Isprocess())
+                {
+                    baseHit.TagProcess();
+                    if (baseHit.hitType == HitType.Ball)
                     {
-                        var myfastHitEdge = m_fastHitEdge[k];
-
-                        if (myfastHitEdge.ball == myfastHitBall.runballObj)
-                        {
-                            //边的碰撞记录花费时间更短
-                            if (myfastHitEdge.ball.deltaTime * myfastHitEdge.t_percent < myfastHitBall.t_percent * myfastHitBall.runballObj.deltaTime)
-                            {
-                                m_fastHitBall.Remove(myfastHitBall);//删除球和球碰撞记录
-                            }
-                            //边的碰撞记录花费时间更长
-                            else
-                            {
-                                m_fastHitEdge.Remove(myfastHitEdge);//删除球和边的碰撞记录
-                            }
-                            break;
-                        }
+                        var _baseHit = baseHit as fastHitBall;
+                        _baseHit.runballObj.CalBallPos(_baseHit.t_percent * _baseHit.runballObj.deltaTime);
+                        _baseHit.staticballObj.CalBallPos(_baseHit.t_percent * _baseHit.staticballObj.deltaTime);
+                        updateDirAndTimeByBall(_baseHit.t_percent, _baseHit.runballObj, _baseHit.staticballObj);
+                    }
+                    else if (baseHit.hitType == HitType.Edge)
+                    {
+                        var _baseHit = baseHit as fastEdge;
+                        _baseHit.ball.CalBallPos(_baseHit.t_percent * _baseHit.ball.deltaTime);
+                        updateDirAndTimeByEdge(_baseHit.t_percent, _baseHit.tbe, _baseHit.ball);
                     }
                 }
-                for (int i = 0; i < m_fastHitBall.Count; i++)
-                {
-                    updateDirAndTimeByBall(m_fastHitBall[i].t_percent, m_fastHitBall[i].runballObj, m_fastHitBall[i].staticballObj);
-                }
+                
+                //for(int i = 0; i < baseHits.Count;i++)
+                //{
+                //    var baseHit = baseHits[i];
+                //    if (baseHit.valid == false || baseHit.Isprocess()) continue;
+                //    baseHit.TagProcess();
+                //    if(baseHit.hitType==HitType.Ball)
+                //    {
+                //        var _baseHit = baseHit as fastHitBall;
+                //        _baseHit.runballObj.CalBallPos(_baseHit.t_percent * _baseHit.runballObj.deltaTime);
+                //        _baseHit.staticballObj.CalBallPos(_baseHit.t_percent * _baseHit.staticballObj.deltaTime);
+                //        updateDirAndTimeByBall(_baseHit.t_percent, _baseHit.runballObj, _baseHit.staticballObj);
+                //    }
+                //    else if(baseHit.hitType==HitType.Edge)
+                //    {
+                //        var _baseHit = baseHit as fastEdge;
+                //        _baseHit.ball.CalBallPos(_baseHit.t_percent * _baseHit.ball.deltaTime);
+                //        updateDirAndTimeByEdge(_baseHit.t_percent, _baseHit.tbe, _baseHit.ball);
+                //    }
+                //    break;
+                //}
             }
+            UnLockBalls();
+                //pairBallKey = 0;
+                //ballPairHit.Clear();
+                //collectValidHits.Clear();
+                //collectValidHits = new List<BaseHit>(collectHits);
+                //// collectHis相当于收集了每个球花费最少时间的碰撞快照
+                //for(int i = collectHits.Count-1; i >=0;i--)
+                //{
+                //    var baseHit = collectHits[i];
+                //    if(baseHit.hitType==HitType.Ball)
+                //    {
+                //        var _baseHit = baseHit as fastHitBall;
+                //        for(int j =0;j<collectValidHits.Count;j++)
+                //        {
+                //            var check_baseHit = collectValidHits[j];
 
-            //仅仅剩余边的碰撞集合，无需考虑球和球的碰撞集合
+                //            if (baseHit == check_baseHit) continue;
 
-            if (m_fastHitEdge.Count > 0)
-            {
-                for (int i = 0; i < m_fastHitEdge.Count; i++)
-                {
-                    updateDirAndTimeByEdge(m_fastHitEdge[i].t_percent, m_fastHitEdge[i].tbe, m_fastHitEdge[i].ball);//更新位置，并且由于撞击而更改速度方向
-                }
-            }
+                //            if (check_baseHit.hitType == HitType.Ball)
+                //            {
+                //                var _check_baseHit = check_baseHit as fastHitBall;
+                //                //碰撞对不一致,无效碰撞
+                //                if(_baseHit.staticballObj.ID==_check_baseHit.runballObj.ID&&_check_baseHit.staticballObj.ID!=_baseHit.runballObj.ID)
+                //                {
+                //                    collectHits.Remove(baseHit);
+                //                }
+                //            }
+                //            else
+                //            {
+                //                var _check_baseHit = check_baseHit as fastEdge;
+                //                //碰撞对不一致,无效碰撞
+                //                if (_baseHit.staticballObj.ID == _check_baseHit.ball.ID)
+                //                {
+                //                    collectHits.Remove(baseHit);
+                //                }
+                //            }
+                //        }
+                //    }
+                //}
 
-            m_fastHitBall.Clear();
-            m_fastHitEdge.Clear();
+                ////这里还要处理相同作用的记录 运动球和静态球的，找静态球的记录是否和运动球的记录对应
+                ////collectValidHits = new List<BaseHit>(collectHits);
+                //for (int i = collectHits.Count - 1; i >= 0; i--)
+                //{
+                //    var baseHit = collectHits[i];
+                //    if (baseHit.hitType == HitType.Ball)
+                //    {
+                //        var _baseHit = baseHit as fastHitBall;
+                //        for (int j = 0; j < collectHits.Count; j++)
+                //        {
+                //            var check_baseHit = collectHits[j];
+
+                //            if (baseHit == check_baseHit) continue;
+
+                //            if (check_baseHit.hitType == HitType.Ball)
+                //            {
+                //                var _check_baseHit = check_baseHit as fastHitBall;
+                //                //碰撞对一致,留其一
+                //                if (_baseHit.staticballObj.ID == _check_baseHit.runballObj.ID && _check_baseHit.staticballObj.ID == _baseHit.runballObj.ID)
+                //                {
+                //                    collectHits.Remove(baseHit);
+                //                    break;
+                //                }
+                //            }
+                //        }
+                //    }
+                //}
+
+
+
+                //for (int i = 0; i < collectHits.Count; i++)
+                //{
+                //    var baseHit = collectHits[i];
+                //    if(baseHit.hitType==HitType.Edge)
+                //    {
+                //        var _baseHit = baseHit as fastEdge;
+                //        updateDirAndTimeByEdge(_baseHit.t_percent, _baseHit.tbe, _baseHit.ball);//更新位置，并且由于撞击而更改速度方向
+                //    }
+                //    else
+                //    {
+                //        var _baseHit = baseHit as fastHitBall;
+                //        updateDirAndTimeByBall(_baseHit.t_percent, _baseHit.runballObj, _baseHit.staticballObj);
+
+                //    }
+
+                //}
+                ballPairHit.Clear();
+            collectHits.Clear();
         }
 
-        public bool CheckEdgeCollide(TSVector2 E1, TSVector2 E2, TSVector2 cur_pos, TSVector2 next_pos,CircleRunData run_crd,ref FP t_percent)
-        {
-            //在当前速度下,预测圆最先和哪条边碰撞
-            for (int i = 0; i < tableEdges.Length; i++)
-            {
-                if (Detection.CheckCloseEdge(E1,E2,cur_pos,next_pos))
-                {
+        //public bool CheckEdgeCollide(TSVector2 E1, TSVector2 E2, TSVector2 cur_pos, TSVector2 next_pos,CircleRunData run_crd,ref FP t_percent)
+        //{
+        //    //在当前速度下,预测圆最先和哪条边碰撞
+        //    for (int i = 0; i < tableEdges.Length; i++)
+        //    {
+        //        if (Detection.CheckCloseEdge(E1,E2,cur_pos,next_pos))
+        //        {
 
-                    if (Detection.CheckCircle_LineContact(tableEdges[i], run_crd, ref t_percent))
-                    {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
+        //            if (Detection.CheckCircle_LineContact(tableEdges[i], run_crd, ref t_percent))
+        //            {
+        //                return true;
+        //            }
+        //        }
+        //    }
+        //    return false;
+        //}
 
         private int step = 0;
 
@@ -423,9 +566,15 @@ namespace PoolEngine
         //private FP moveSpeed = 10;
 
         //CircleRunData crd = new CircleRunData();
-        private List<fastHitBall> m_fastHitBall = new List<fastHitBall>();
-        private List<fastEdge> m_fastHitEdge = new List<fastEdge>();
-        private List<fastBall> m_fastBall = new List<fastBall>();
+        //private List<fastHitBall> m_fastHitBall = new List<fastHitBall>();
+        //private List<fastEdge> m_fastHitEdge = new List<fastEdge>();
+        //private List<fastBall> m_fastBall = new List<fastBall>();
+
+        private List<BaseHit> collectHits = new List<BaseHit>();//可能的碰撞集合
+        private List<BaseHit> collectValidHits = new List<BaseHit>();//真实的碰撞集合
+        private Dictionary<int, List<BaseHit>> ballPairHit = new Dictionary<int, List<BaseHit>>();
+
+        private int pairBallKey;
         //GameObject ballObj;
 
 

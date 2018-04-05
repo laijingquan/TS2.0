@@ -84,41 +84,115 @@ namespace PoolEngine
         }
     }
 
-    public class fastBall
+    public enum HitType
     {
-        public fastBall(BallObj _ball,FP _deltaTime)
-        {
-            ball = _ball;
-            deltaTime = _deltaTime;
-        }
-        public BallObj ball;
-        public FP deltaTime;
+        None,
+        Ball,
+        Edge,
+        Other,
     }
 
-    public class fastHitBall
+    public class BaseHit
+    {
+        public BaseHit()
+        {
+             hitType=HitType.None;
+             t_percent=0;
+             deltaTime=0;
+             valid=true;//碰撞无效
+             //process=false;//是否已经更新过了
+    }
+        public virtual FP CalHitTime()
+        {
+            return t_percent * deltaTime;
+        }
+        public virtual int GetMainBallID() { return -1; }
+        public HitType hitType;
+        public FP t_percent;
+        public FP deltaTime;
+        public bool valid;//碰撞无效
+        public virtual bool Isprocess() { return false; }//是否已经更新过了
+        public virtual void TagProcess() { }
+    }
+
+    public class fastBall: BaseHit
+    {
+        public fastBall(BallObj _ball)
+        {
+            ball = _ball;
+            deltaTime = _ball.deltaTime;
+            hitType = HitType.None;
+        }
+        public BallObj ball;
+        //public FP deltaTime;
+    }
+
+    public class fastHitBall: BaseHit
     {
         public fastHitBall(BallObj _runballObj,BallObj _staticballObj, FP _t_percent)
         {
             runballObj = _runballObj;
             staticballObj = _staticballObj;
             t_percent = _t_percent;
+            hitType = HitType.Ball;
+        }
+
+        public FP CalRunBallHitTime()
+        {
+            return runballObj.deltaTime * t_percent;
+        }
+        public FP CalStaticBallHitTime()
+        {
+            return staticballObj.deltaTime * t_percent;
+        }
+        public override FP CalHitTime()
+        {
+            return CalRunBallHitTime();
+        }
+
+        public override int GetMainBallID()
+        {
+            return runballObj.ID;
+        }
+        public override bool Isprocess()
+        {
+            return runballObj.lockcheck && staticballObj.lockcheck;
+        }
+        public override void TagProcess()
+        {
+            runballObj.lockcheck = true;
+            staticballObj.lockcheck = true;
         }
         public BallObj runballObj;
         public BallObj staticballObj;
-        public FP t_percent;
+        //public FP t_percent;
     }
 
-    public class fastEdge
+    public class fastEdge: BaseHit
     {
         public fastEdge(BallObj _ball,tableEdge _tbe, FP _t_percent)
         {
             ball = _ball;
             tbe = _tbe;
             t_percent = _t_percent;
+            deltaTime = ball.deltaTime;
+            hitType = HitType.Edge;
+        }
+        public override int GetMainBallID()
+        {
+            return ball.ID;
+        }
+        public override bool Isprocess()
+        {
+            return ball.lockcheck;
+        }
+        public override void TagProcess()
+        {
+            ball.lockcheck = true;
         }
         public BallObj ball;
         public tableEdge tbe;
-        public FP t_percent;
+        //public FP t_percent;
     }
 
 }

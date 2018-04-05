@@ -54,25 +54,37 @@ namespace PoolEngine
         {
             return cur_pos + moveDir/* * moveSpeed*/ * deltaTime;
         }
+
+        public bool CalBallPos(FP _deltaTime)
+        {
+            var calPos = cur_pos + moveDir * _deltaTime;
+            return CheckBound(calPos,true);
+        }
+
         public void UpdateBallPos(FP _deltaTime)
         {
             if (_deltaTime < 0) return;
             pre_pos = cur_pos;
+            CheckBound(cur_pos + moveDir* _deltaTime);
             cur_pos += moveDir /** moveSpeed*/ * _deltaTime;
             deltaTime -= _deltaTime;//更新剩余时间
             if (deltaTime < 0)
                 deltaTime = 0;
-            CheckBound();
         }
 
-        void CheckBound()
+        bool CheckBound(TSVector2 check_pos,bool predict=false)
         {
-            var x = TSMath.Abs(cur_pos.x);
-            var y = TSMath.Abs(cur_pos.y);
-            if(x>4.6||y>2.1)
+            var x = TSMath.Abs(check_pos.x);
+            var y = TSMath.Abs(check_pos.y);
+            if(x>4.50001||y>2.0001)
             {
-                Debug.Log("出界le ");
+                if (predict)
+                    Debug.Log("预测出界");
+                else
+                    Debug.Log("<color=#800000ff>" + "已经出界了~~~~" + "</color>");
+                return true;
             }
+            return false;
         }
 
         public BallObj(BallObj other)
