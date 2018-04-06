@@ -8,17 +8,24 @@ namespace PoolEngine
 {
     public class PoolMain : MonoBehaviour
     {
-
+        public bool debug;
         void Awake()
         {
-            PoolPhycisEngine.instance.Awake();
-            tableEdges = PoolPhycisEngine.instance.TableEdges;
-            balls = PoolPhycisEngine.instance.Ball;
-            DispatchBallsAwake();
+           //PoolPhycisEngine.instance.Debug = debug;
+           // PoolPhycisEngine.instance.Awake();
+           // tableEdges = PoolPhycisEngine.instance.TableEdges;
+           // balls = PoolPhycisEngine.instance.Ball;
+           // DispatchBallsAwake();
         }
         // Use this for initialization
         void Start()
         {
+            PoolPhycisEngine.instance.EngineDebug = debug;
+            PoolPhycisEngine.instance.Awake();
+            tableEdges = PoolPhycisEngine.instance.TableEdges;
+            balls = PoolPhycisEngine.instance.Ball;
+            DispatchBallsAwake();
+
             DispatchBallsStart();
             DrawTable();           
         }
