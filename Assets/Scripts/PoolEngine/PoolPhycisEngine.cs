@@ -112,6 +112,21 @@ namespace PoolEngine
 
             ballObj = new BallObj(24, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
             balls.Add(ballObj);
+            ballObj = new BallObj(25, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            balls.Add(ballObj);
+
+            ballObj = new BallObj(26, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            balls.Add(ballObj);
+            ballObj = new BallObj(27, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            balls.Add(ballObj);
+
+            ballObj = new BallObj(28, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            balls.Add(ballObj);
+            ballObj = new BallObj(29, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            balls.Add(ballObj);
+
+            ballObj = new BallObj(30, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            balls.Add(ballObj);
         }
         void CreateTable()
         {
@@ -467,14 +482,41 @@ namespace PoolEngine
             ballPairHit.Clear();
         }
 
+        public bool CheckBound(TSVector2 pos)
+        {
+            var x = TSMath.Abs(pos.x);
+            var y = TSMath.Abs(pos.y);
+            if (x+TSMath.Epsilon>tableWidth/2.0||y+TSMath.Epsilon>TableHeight/2.0)
+            {
+                return true;
+            }
+            return false;
+        }
+
         private int step = 0;
         private bool debug = false;
         private tableEdge[] tableEdges = new tableEdge[4];
-        private FP tableWidth = 10;
-        private FP tableHeight = 5;
+        private  FP tableWidth = 10;
+        private   FP tableHeight = 5;
         private List<BallObj> balls = new List<BallObj>();
 
         private Dictionary<int, List<BaseHit>> ballPairHit = new Dictionary<int, List<BaseHit>>();
+
+        public FP TableWidth
+        {
+            get
+            {
+                return tableWidth;
+            }
+        }
+
+        public FP TableHeight
+        {
+            get
+            {
+                return tableHeight;
+            }
+        }
 
         public bool EngineDebug
         {

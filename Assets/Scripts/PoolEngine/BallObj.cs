@@ -77,9 +77,9 @@ namespace PoolEngine
 
         bool CheckBound(TSVector2 check_pos,bool predict=false)
         {
-            var x = TSMath.Abs(check_pos.x);
-            var y = TSMath.Abs(check_pos.y);
-            if(x>4.50001||y>2.0001)
+            //var x = TSMath.Abs(check_pos.x);
+            //var y = TSMath.Abs(check_pos.y);
+            if(PoolPhycisEngine.instance.CheckBound(check_pos))
             {
                 if (predict)
                     Debug.Log("预测出界");
