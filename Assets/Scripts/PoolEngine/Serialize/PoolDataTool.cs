@@ -15,13 +15,13 @@ namespace PoolEngine
 
         public static void Save(List<BallObj> _datas)
         {
-            var poolData = ScriptableObject.CreateInstance<PoolData>();
-            foreach(var data in _datas)
-            {
-                data.DoSerialize();
-            }
-            poolData.datas = _datas;
-            UnityEditor.AssetDatabase.CreateAsset(poolData, path);
+            //var poolData = ScriptableObject.CreateInstance<PoolData>();
+            //foreach(var data in _datas)
+            //{
+            //    data.DoSerialize();
+            //}
+            //poolData.datas = _datas;
+            //UnityEditor.AssetDatabase.CreateAsset(poolData, path);
             UnityEditor.EditorApplication.isPaused = true;
         }
 

@@ -99,7 +99,7 @@ namespace PoolEngine
                 {
                     var ball = balls[i];
                     if (ball != null)
-                        Gizmos.DrawRay(ToXZ(ball.cur_pos), ToXZ(ball.moveDir * 1000));
+                        Gizmos.DrawRay(ToXZ(ball.GetPos()), ToXZ(ball.GetMoveDir() * 1000));
                 }
             }
         }

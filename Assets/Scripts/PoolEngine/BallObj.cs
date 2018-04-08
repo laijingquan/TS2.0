@@ -8,15 +8,26 @@ namespace PoolEngine
     [System.Serializable]
     public class BallObj:PoolPhycisSeariExtend
     {
-        public BallObj(int _ID,TSVector2 _cur_pos,TSVector2 _moveDir,FP _moveSpeed,FP _radius)
+        public BallObj(int _ID,TSVector2 _cur_pos, TSVector2 _moveDir, FP _moveSpeed, FP _radius)
         {
             ID = _ID;
             cur_pos = _cur_pos;
             pre_pos = TSVector2.zero;
             radius = _radius;
             moveSpeed = _moveSpeed;
-            moveDir = _moveDir*moveSpeed;
+            moveDir = _moveDir * moveSpeed;
+            body = new Body(cur_pos,moveDir,TSVector2.zero);
         }
+
+        public BallObj(int _ID, TSVector2 _cur_pos,FP _radius)
+        {
+            ID = _ID;
+            cur_pos = _cur_pos;
+            pre_pos = TSVector2.zero;
+            radius = _radius;
+            body = new Body(cur_pos);
+        }
+
         public BallObj()
         {
 
@@ -49,13 +60,16 @@ namespace PoolEngine
             ballrender.transform.position = new Vector3(cur_pos.x.AsFloat(), 0, cur_pos.y.AsFloat());
         }
 
-        public TSVector2 PredictPos(FP _deltaTime)
-        {
-            return cur_pos + moveDir /** moveSpeed*/ * _deltaTime;
-        }
+        //public TSVector2 PredictPos(FP _deltaTime)
+        //{
+        //    return cur_pos + moveDir /** moveSpeed*/ * _deltaTime;
+        //}
         public TSVector2 PredictPos()
         {
-            return cur_pos + moveDir/* * moveSpeed*/ * deltaTime;
+            if (body != null)
+                return body.PredictNextPos(deltaTime);
+            else
+                return cur_pos + moveDir * deltaTime;
         }
 
         public bool CalBallPos(FP _deltaTime)
@@ -64,15 +78,66 @@ namespace PoolEngine
             return CheckBound(calPos,true);
         }
 
+        public void UpdateMoveDir(TSVector2 dir)
+        {
+            if (body != null)
+                moveDir = body.UpdateMoveDir(dir);
+            else
+                moveDir = dir;
+        }
+
+        public TSVector2 GetMoveDir()
+        {
+            if (body != null)
+                return body.GetMoveDir();           
+            return moveDir;
+        }
+
+        public TSVector2 GetPos()
+        {
+            if (body != null)
+                return body.GetPos();
+            return cur_pos;
+        }
+
+        public FP GetRadius()
+        {
+            return radius;
+        }
+
         public void UpdateBallPos(FP _deltaTime)
         {
             if (_deltaTime < 0) return;
             CheckBound(cur_pos + moveDir * _deltaTime);
+            NextPos(_deltaTime);
+            //pre_pos = cur_pos;
+            //cur_pos += moveDir /** moveSpeed*/ * _deltaTime;
+            //deltaTime -= _deltaTime;//更新剩余时间
+            //if (deltaTime < 0)
+            //    deltaTime = 0;
+        }
+
+
+        public void NextPos(FP _deltaTime)
+        {
             pre_pos = cur_pos;
-            cur_pos += moveDir /** moveSpeed*/ * _deltaTime;
+            if (body!=null)
+            {
+                cur_pos = body.NextPos(_deltaTime);
+            }
+            else
+                cur_pos += moveDir* _deltaTime;
             deltaTime -= _deltaTime;//更新剩余时间
             if (deltaTime < 0)
                 deltaTime = 0;
+        }
+
+        public bool IsSleep()
+        {
+            if (body != null)
+                return body.IsSleep();
+            else
+                return moveDir.magnitude <= 0 ? true : false;
         }
 
         bool CheckBound(TSVector2 check_pos,bool predict=false)
@@ -125,7 +190,8 @@ namespace PoolEngine
             moveDir = GetTSVector2(DIR_KEY);
 
         }
-        
+
+        protected Body body;
 
         public int ID=0;
         public TSVector2 cur_pos=TSVector2.zero;
@@ -135,6 +201,7 @@ namespace PoolEngine
         public FP moveSpeed=10;
         public FP deltaTime=0;
         public bool lockcheck = false;
+        public bool isSleep = false;
         //public bool isSleep = true;
         public GameObject ballrender;
 

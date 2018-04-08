@@ -39,8 +39,26 @@ namespace PoolEngine
             balls = PoolDataTool.Load();
         }
 
+
+        void RandCreateBalls()
+        {
+            TSRandom.Init();
+            FP halfx = TableWidth/2-2*radius;
+            FP halfy = TableHeight / 2-2*radius;
+            for(int i =0;i<10;i++)
+            {
+                //var ball = new BallObj(i, new TSVector2(TSRandom.Range((int)(-halfx), (int)halfx), TSRandom.Range((int)(-halfy), (int)halfy)), new TSVector2(TSRandom.Range(-1, 1), TSRandom.Range(-1, 1)).normalized, TSRandom.Range(0,100), radius);
+                var ball = new BallObj(i, new TSVector2(TSRandom.Range((int)(-halfx), (int)halfx), TSRandom.Range((int)(-halfy), (int)halfy)), radius);
+                balls.Add(ball);
+                if (ball.ID == 0)
+                    mainBall = ball;
+            }
+        }
+
         void CreateBalls()
         {
+            RandCreateBalls();
+            return;
             var ballObj = new BallObj(1, new TSVector2(0, 2), new TSVector2(0, -1).normalized,1,0.5);
             balls.Add(ballObj);
 
@@ -153,6 +171,14 @@ namespace PoolEngine
             tableEdges[3] = new tableEdge(new TSVector2(tableWidth / 2, -tableHeight / 2), new TSVector2(tableWidth / 2, tableHeight / 2));
         }
 
+        public void Shot(TSVector2 movedir)
+        {
+            if(mainBall!=null)
+            {
+                mainBall.UpdateMoveDir(movedir);
+            }
+        }
+
 
         private bool control = true;
         private FP fixedTime=0;
@@ -161,6 +187,8 @@ namespace PoolEngine
         public void Update(FP deltaTime)
         {
             if (debug)
+                return;
+            if (IsAllSleep())
                 return;
             //UpdatePhysicStep(deltaTime);//逻辑层
             fixedTime += deltaTime;
@@ -210,11 +238,11 @@ namespace PoolEngine
         void updateDirAndTimeByEdge(FP _percent, tableEdge _tbe, BallObj ball)
         {
             ball.UpdateBallPos(ball.deltaTime * _percent);//先更新到撞击点
-            ball.deltaTime = ball.deltaTime - ball.deltaTime * _percent;//更新剩余时间
-            var curReflcDir = Detection.CheckCircle_LineCollision(_tbe, ball.cur_pos, ball.radius, ball.moveDir);//计算碰撞响应
+            //ball.deltaTime = ball.deltaTime - ball.deltaTime * _percent;//更新剩余时间
+            var curReflcDir = Detection.CheckCircle_LineCollision(_tbe, ball.GetPos(), ball.GetRadius(), ball.GetMoveDir());//计算碰撞响应
             //AddTestData(_tbe, ball.pre_pos, ball.cur_pos, ball.moveDir, curReflcDir);
-            ball.moveDir = curReflcDir;//更新实时方向
-                                                  //UpdateBallPos(deltaTime); 在这里更新 如果速度过快 那么会直接跑到球桌
+            //ball.moveDir = curReflcDir;//更新实时方向
+            ball.UpdateMoveDir(curReflcDir);//更新实时方向
         }
         void updateDirAndTimeByBall(FP _percent,BallObj runball,BallObj staticball)
         {
@@ -223,13 +251,14 @@ namespace PoolEngine
             //runball.deltaTime  = runball.deltaTime - runball.deltaTime * _percent;//更新剩余时间
             //staticball.deltaTime = staticball.deltaTime - staticball.deltaTime * _percent;
 
-            var runcrd = new CircleRunData(runball.cur_pos, runball.PredictPos(), runball.radius);
-            var staticcrd = new CircleRunData(staticball.cur_pos, staticball.PredictPos(), staticball.radius);
-            var curReflcDir = Detection.CheckCircle_CircleCollision(runball.cur_pos,runball.moveDir,staticball.cur_pos, staticball.moveDir);//计算碰撞响应
+            var runcrd = new CircleRunData(runball.GetPos(), runball.PredictPos(), runball.GetRadius());
+            var staticcrd = new CircleRunData(staticball.GetPos(), staticball.PredictPos(), staticball.GetRadius());
+            var curReflcDir = Detection.CheckCircle_CircleCollision(runball.GetPos(),runball.GetMoveDir(), staticball.GetPos(), staticball.GetMoveDir());//计算碰撞响应
             //AddTestData(_tbe, ball.pre_pos, ball.cur_pos, ball.moveDir, curReflcDir);
-            runball.moveDir = curReflcDir[0];//更新实时方向
-            staticball.moveDir = curReflcDir[1];
-                                                  //UpdateBallPos(deltaTime); 在这里更新 如果速度过快 那么会直接跑到球桌
+            //runball.moveDir = curReflcDir[0];//更新实时方向
+            //staticball.moveDir = curReflcDir[1];
+            runball.UpdateMoveDir(curReflcDir[0]);
+            staticball.UpdateMoveDir(curReflcDir[1]);
         }
 
         void checkCollisionBall()
@@ -280,13 +309,13 @@ namespace PoolEngine
                     var deltaTime = ball.deltaTime;//每个球的剩余的时长是不一样的
                     List<BaseHit> fastHitBalls = new List<BaseHit>();
                     #region 球碰撞检测
-                    CircleRunData run_crd = new CircleRunData(ball.cur_pos, ball.PredictPos(), ball.radius);
+                    CircleRunData run_crd = new CircleRunData(ball.GetPos(), ball.PredictPos(), ball.GetRadius());
                     for (int j = 0; j < balls.Count; j++)
                     {
                         var otherball = balls[j];
                         if (otherball == ball) continue;
                         FP _percent = 0;
-                        CircleRunData static_crd = new CircleRunData(otherball.cur_pos, otherball.PredictPos(), otherball.radius);
+                        CircleRunData static_crd = new CircleRunData(otherball.GetPos(), otherball.PredictPos(), otherball.GetRadius());
                         if (Detection.CheckCircle_CircleContact(run_crd, static_crd, ball.deltaTime, ref _percent))
                         {
                             fastHitBalls.Add(new fastHitBall(ball, otherball, _percent));
@@ -302,7 +331,7 @@ namespace PoolEngine
                     #region 边检测
                     FP t_percent = 0;
 
-                    TSVector2 predictEndPos = ball.cur_pos + ball.moveDir*100;
+                    TSVector2 predictEndPos = ball.GetPos() + ball.GetMoveDir()*100;
 
                     //bool isflag = false;
                     List<BaseHit> fastedges = new List<BaseHit>();
@@ -310,7 +339,7 @@ namespace PoolEngine
                     for (int i = 0; i < tableEdges.Length; i++)
                     {
                         //if (Detection.CheckSegement_Contact(ball.cur_pos, predictEndPos, tableEdges[i].farstart, tableEdges[i].farend))//这个检测是去掉在挨着边但运动方向相反的情况
-                        if(Detection.CheckCloseEdge(tableEdges[i].start,tableEdges[i].end,ball.cur_pos,predictEndPos))
+                        if(Detection.CheckCloseEdge(tableEdges[i].start,tableEdges[i].end,ball.GetPos(),predictEndPos))
                         {
 
                             if (Detection.CheckCircle_LineContact(tableEdges[i], run_crd, ref t_percent))
@@ -344,6 +373,16 @@ namespace PoolEngine
             }
 
             ClearTestData();
+        }
+
+        public bool IsAllSleep()
+        {
+            for (int k = 0; k < balls.Count; k++)
+            {
+                if (!balls[k].IsSleep())
+                    return false;
+            }
+            return true;
         }
 
         void UnLockBalls()
@@ -492,13 +531,19 @@ namespace PoolEngine
             }
             return false;
         }
-
+        #region 事件
+        //public 
+        #endregion
+        #region 数据
         private int step = 0;
         private bool debug = false;
         private tableEdge[] tableEdges = new tableEdge[4];
         private  FP tableWidth = 10;
         private   FP tableHeight = 5;
+        private FP radius = 0.5;
+        private BallObj mainBall;
         private List<BallObj> balls = new List<BallObj>();
+        private Dictionary<int, BallObj> ballsDict = new Dictionary<int, BallObj>();
 
         private Dictionary<int, List<BaseHit>> ballPairHit = new Dictionary<int, List<BaseHit>>();
 
@@ -547,4 +592,5 @@ namespace PoolEngine
             }
         } 
     }
+    #endregion
 }
