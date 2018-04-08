@@ -532,7 +532,11 @@ namespace PoolEngine
             return false;
         }
         #region 事件
-        //public 
+        public Action OnBeforStartRound;
+        public Action OnStartRound;
+        public Action OnAfterStartRound;
+        public Action OnNextRound;
+        public Action OnShot;
         #endregion
         #region 数据
         private int step = 0;
