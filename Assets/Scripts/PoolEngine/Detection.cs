@@ -67,21 +67,22 @@ namespace PoolEngine
             //两个运动方向描述为一方运动另一方静止 so
             TSVector2 VAB = VA - VB;//runCircle相对于staticCircle的运动方向pc
             TSVector2 Idir = staticCircle.cur_pos - runCircle.cur_pos;//射线起点到静态圆的方向
-            FP Idir_length_square = TSVector2.Dot(Idir, Idir);
+            //FP Idir_length_square = TSVector2.Dot(Idir, Idir);
+            FP Idir_length_square = Idir.LengthSquared();
             FP static_radius_square = (staticCircle.radius * 2)* (staticCircle.radius * 2);
-            Func<TSVector2,FP,FP> calHitInfo = (e_dir,a_projvalue) =>
-            //可以在返回true的时候再计算，后优化
-            {
-                //TSVector2 e_dir = staticCircle.cur_pos - runCircle.cur_pos;
-                //FP a_projvalue = TSMath.Abs(TSVector2.Dot(e_dir, VAB.normalized));
-                a_projvalue = TSMath.Abs(a_projvalue);
-                FP b_squar = TSVector2.Dot(e_dir, e_dir) - a_projvalue * a_projvalue;
-                FP f = TSMath.Sqrt(static_radius_square - b_squar);
-                FP t = a_projvalue - f;//碰撞到静态圆所走的路程，总路程是runCircle.cur_pos+VAB*delataTime;
-                return t /*/ (VAB * deltaTime).magnitude*/;//求出占比
-            };
+            //Func<TSVector2,FP,FP> calHitInfo = (e_dir,a_projvalue) =>
+            ////可以在返回true的时候再计算，后优化
+            //{
+            //    //TSVector2 e_dir = staticCircle.cur_pos - runCircle.cur_pos;
+            //    //FP a_projvalue = TSMath.Abs(TSVector2.Dot(e_dir, VAB.normalized));
+            //    a_projvalue = TSMath.Abs(a_projvalue);
+            //    FP b_squar = TSVector2.Dot(e_dir, e_dir) - a_projvalue * a_projvalue;
+            //    FP f = TSMath.Sqrt(static_radius_square - b_squar);
+            //    FP t = a_projvalue - f;//碰撞到静态圆所走的路程，总路程是runCircle.cur_pos+VAB*delataTime;
+            //    return t /*/ (VAB * deltaTime).magnitude*/;//求出占比
+            //};
 
-            if (Idir_length_square + TSMath.Epsilon < static_radius_square)//射线起点在圆心内部,相交
+            if (Idir_length_square  < static_radius_square)//射线起点在圆心内部,相交
             {
                 //_percent =  calHitInfo();
                 //_percent = 1;//一开始就相交的
@@ -102,15 +103,42 @@ namespace PoolEngine
                     {
                         return false;
                     }
-                    else
+                    else//有可能有交点，因为有可能距离不够
                     {
-                        var t = calHitInfo(Idir, a_projvalue);
-                        if(t>=TSMath.Epsilon&& t-VAB.magnitude<= TSMath.Epsilon)
+                        //var t = calHitInfo(Idir, a_projvalue);
+                        FP b_squar = m_square;
+                        FP f = TSMath.Sqrt(static_radius_square - b_squar);//理论上来说 f是开跟后的结果,应该有俩个值？
+                        FP t1 = a_projvalue - f;//碰撞到静态圆所走的路程，总路程是runCircle.cur_pos+VAB*delataTime;
+                        FP t2 = a_projvalue + f;
+                        FP per = 0;
+                        bool isFlag = false;
+                        if (t1 > 0&& t1 - VAB.magnitude< 0)
                         {
-                            _percent = t / VAB.magnitude;
-                            return true;
+                            isFlag = true;
+                            if(VAB.magnitude<0)
+                            {
+                                Debug.Log("除数不能为0");
+                            }
+                            per = t1 / VAB.magnitude;
                         }
-                        return false;
+
+                        if(t2 > 0 && t2 - VAB.magnitude < 0)
+                        {
+                            isFlag = true;
+                            if (VAB.magnitude < 0)
+                            {
+                                Debug.Log("除数不能为0");
+                            }
+                            var per2 = t2 / VAB.magnitude;
+                            if(per2<per)
+                            {
+                                per = per2;
+                            }
+                        }
+                        _percent = per;
+                        if (isFlag&&_percent < FP.EN4)
+                            return false;
+                        return isFlag;
                     }
                 }
             }
@@ -204,7 +232,7 @@ namespace PoolEngine
             TSVector2 HCnormal = TSVector2.Normalize(HC);
             FP VP = TSMath.Abs(TSVector2.Dot(V, HCnormal));
             TSVector2 VF = V + HCnormal * VP * 2;//反射方向
-
+            
             return VF;
         }
 

@@ -16,7 +16,7 @@ namespace PoolEngine
             radius = _radius;
             moveSpeed = _moveSpeed;
             moveDir = _moveDir * moveSpeed;
-            body = new Body(cur_pos,moveDir,TSVector2.zero);
+            //body = new Body(cur_pos,moveDir,TSVector2.zero);
         }
 
         public BallObj(int _ID, TSVector2 _cur_pos,FP _radius)

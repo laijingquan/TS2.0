@@ -45,10 +45,10 @@ namespace PoolEngine
             TSRandom.Init();
             FP halfx = TableWidth/2-2*radius;
             FP halfy = TableHeight / 2-2*radius;
-            for(int i =0;i<10;i++)
+            for(int i =0;i<30;i++)
             {
-                //var ball = new BallObj(i, new TSVector2(TSRandom.Range((int)(-halfx), (int)halfx), TSRandom.Range((int)(-halfy), (int)halfy)), new TSVector2(TSRandom.Range(-1, 1), TSRandom.Range(-1, 1)).normalized, TSRandom.Range(0,100), radius);
-                var ball = new BallObj(i, new TSVector2(TSRandom.Range((int)(-halfx), (int)halfx), TSRandom.Range((int)(-halfy), (int)halfy)), radius);
+                var ball = new BallObj(i, new TSVector2(TSRandom.Range((int)(-halfx), (int)halfx), TSRandom.Range((int)(-halfy), (int)halfy)), new TSVector2(TSRandom.Range(-1, 1), TSRandom.Range(-1, 1)).normalized, TSRandom.Range(1,2), radius);
+                //var ball = new BallObj(i, new TSVector2(TSRandom.Range((int)(-halfx), (int)halfx), TSRandom.Range((int)(-halfy), (int)halfy)), radius);
                 balls.Add(ball);
                 if (ball.ID == 0)
                     mainBall = ball;
@@ -485,6 +485,7 @@ namespace PoolEngine
                 }
             }
 
+            bool isFlag = false;
             foreach (var ballpair in ballPairHit)
             {
                 int ID = ballpair.Key;
@@ -501,6 +502,7 @@ namespace PoolEngine
 
                 if (baseHit!=null&&baseHit.valid == true && !baseHit.Isprocess())
                 {
+                    isFlag = true;
                     baseHit.TagProcess();
                     if (baseHit.hitType == HitType.Ball)
                     {
@@ -516,6 +518,11 @@ namespace PoolEngine
                         updateDirAndTimeByEdge(_baseHit.t_percent, _baseHit.tbe, _baseHit.ball);
                     }
                 }
+            }
+
+            if(isFlag==false)
+            {
+                Debug.Log("虽然有碰撞记录,但是没有执行碰撞,这里可能会导致死循环的情况,因为一直检测到有碰撞,却不执行");
             }
             UnLockBalls();
             ballPairHit.Clear();
