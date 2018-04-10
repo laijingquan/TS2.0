@@ -43,6 +43,14 @@ namespace PoolEngine
         {
 
         }
+
+        public void Init(TSVector2 _cur_pos, TSVector2 _next_pos, FP _radius)
+        {
+            cur_pos = _cur_pos;
+            next_pos = _next_pos;
+            radius = _radius;
+        }
+
         public TSVector2 cur_pos;
         public TSVector2 next_pos;
         public FP radius;
@@ -129,7 +137,19 @@ namespace PoolEngine
 
     public class fastHitBall: BaseHit
     {
+        public fastHitBall()
+        {
+
+        }
         public fastHitBall(BallObj _runballObj,BallObj _staticballObj, FP _t_percent)
+        {
+            runballObj = _runballObj;
+            staticballObj = _staticballObj;
+            t_percent = _t_percent;
+            hitType = HitType.Ball;
+        }
+
+        public void Init(BallObj _runballObj, BallObj _staticballObj, FP _t_percent)
         {
             runballObj = _runballObj;
             staticballObj = _staticballObj;
@@ -170,6 +190,10 @@ namespace PoolEngine
 
     public class fastEdge: BaseHit
     {
+        public fastEdge()
+        {
+
+        }
         public fastEdge(BallObj _ball,tableEdge _tbe, FP _t_percent)
         {
             ball = _ball;
@@ -178,6 +202,16 @@ namespace PoolEngine
             deltaTime = ball.deltaTime;
             hitType = HitType.Edge;
         }
+
+        public void Init(BallObj _ball, tableEdge _tbe, FP _t_percent)
+        {
+            ball = _ball;
+            tbe = _tbe;
+            t_percent = _t_percent;
+            deltaTime = ball.deltaTime;
+            hitType = HitType.Edge;
+        }
+
         public override int GetMainBallID()
         {
             return ball.ID;
