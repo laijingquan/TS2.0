@@ -39,7 +39,7 @@ namespace PoolEngine
             //ballrender = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             ballrender = GameObject.Instantiate(Resources.Load("Sphere") as GameObject);
             var text = ballrender.transform.FindChild("Text");
-            text.transform.GetComponent<TextMesh>().text = ID.ToString();
+            text.transform.GetComponent<TextMesh>().text = ""/*ID.ToString()*/;
             ballrender.name = ID.ToString();
             UpdateBallDraw();
         }
@@ -64,12 +64,12 @@ namespace PoolEngine
         //{
         //    return cur_pos + moveDir /** moveSpeed*/ * _deltaTime;
         //}
-        public TSVector2 PredictPos()
+        public TSVector2 PredictPos(FP _deltaTime)
         {
             if (body != null)
-                return body.PredictNextPos(deltaTime);
+                return body.PredictNextPos(_deltaTime);
             else
-                return cur_pos + moveDir * deltaTime;
+                return cur_pos + moveDir * _deltaTime;
         }
 
         public bool CalBallPos(FP _deltaTime)

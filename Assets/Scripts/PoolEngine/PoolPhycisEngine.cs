@@ -45,9 +45,9 @@ namespace PoolEngine
             TSRandom.Init();
             FP halfx = TableWidth/2-2*radius;
             FP halfy = TableHeight / 2-2*radius;
-            for(int i =0;i<30;i++)
+            for(int i =0;i<20;i++)
             {
-                var ball = new BallObj(i, new TSVector2(TSRandom.Range((int)(-halfx), (int)halfx), TSRandom.Range((int)(-halfy), (int)halfy)), new TSVector2(TSRandom.Range(-1, 1), TSRandom.Range(-1, 1)).normalized, TSRandom.Range(1,2), radius);
+                var ball = new BallObj(i, new TSVector2(TSRandom.Range((int)(-halfx), (int)halfx), TSRandom.Range((int)(-halfy), (int)halfy)), new TSVector2(TSRandom.Range(-1, 1), TSRandom.Range(-1, 1)).normalized, TSRandom.Range(100,200), radius);
                 //var ball = new BallObj(i, new TSVector2(TSRandom.Range((int)(-halfx), (int)halfx), TSRandom.Range((int)(-halfy), (int)halfy)), radius);
                 balls.Add(ball);
                 if (ball.ID == 0)
@@ -235,24 +235,24 @@ namespace PoolEngine
         }
 
 
-        void updateDirAndTimeByEdge(FP _percent, tableEdge _tbe, BallObj ball)
+        void updateDirAndTimeByEdge(FP _percent, tableEdge _tbe, BallObj ball,FP _deltaTime)
         {
-            ball.UpdateBallPos(ball.deltaTime * _percent);//先更新到撞击点
+            ball.UpdateBallPos(_deltaTime * _percent);//先更新到撞击点
             //ball.deltaTime = ball.deltaTime - ball.deltaTime * _percent;//更新剩余时间
             var curReflcDir = Detection.CheckCircle_LineCollision(_tbe, ball.GetPos(), ball.GetRadius(), ball.GetMoveDir());//计算碰撞响应
             //AddTestData(_tbe, ball.pre_pos, ball.cur_pos, ball.moveDir, curReflcDir);
             //ball.moveDir = curReflcDir;//更新实时方向
             ball.UpdateMoveDir(curReflcDir);//更新实时方向
         }
-        void updateDirAndTimeByBall(FP _percent,BallObj runball,BallObj staticball)
+        void updateDirAndTimeByBall(FP _percent,BallObj runball,BallObj staticball, FP _deltaTime)
         {
-            runball.UpdateBallPos(runball.deltaTime * _percent);//先更新到撞击点
-            staticball.UpdateBallPos(staticball.deltaTime*_percent);
+            runball.UpdateBallPos(_deltaTime * _percent);//先更新到撞击点
+            staticball.UpdateBallPos(_deltaTime * _percent);
             //runball.deltaTime  = runball.deltaTime - runball.deltaTime * _percent;//更新剩余时间
             //staticball.deltaTime = staticball.deltaTime - staticball.deltaTime * _percent;
 
-            var runcrd = new CircleRunData(runball.GetPos(), runball.PredictPos(), runball.GetRadius());
-            var staticcrd = new CircleRunData(staticball.GetPos(), staticball.PredictPos(), staticball.GetRadius());
+            var runcrd = new CircleRunData(runball.GetPos(), runball.PredictPos(_deltaTime), runball.GetRadius());
+            var staticcrd = new CircleRunData(staticball.GetPos(), staticball.PredictPos(_deltaTime), staticball.GetRadius());
             var curReflcDir = Detection.CheckCircle_CircleCollision(runball.GetPos(),runball.GetMoveDir(), staticball.GetPos(), staticball.GetMoveDir());//计算碰撞响应
             //AddTestData(_tbe, ball.pre_pos, ball.cur_pos, ball.moveDir, curReflcDir);
             //runball.moveDir = curReflcDir[0];//更新实时方向
@@ -289,89 +289,181 @@ namespace PoolEngine
                 ball.lockcheck = false;
             }
             testnumber = 0;
-            while (true)
+            //while (true)
+            //{
+            //    testnumber++;
+            //    if (testnumber > 100)
+            //    {
+            //        if(testnumber>200)
+            //        {
+            //            Debug.Log("防止死循环");
+            //            break;
+            //        }
+            //    }
+
+            //    for (int k = 0; k < balls.Count; k++)
+            //    {
+            //        var ball = balls[k];
+            //        if (ball.deltaTime<=0)
+            //            continue;
+            //        var deltaTime = ball.deltaTime;//每个球的剩余的时长是不一样的
+            //        List<BaseHit> fastHitBalls = new List<BaseHit>();
+            //        #region 球碰撞检测
+            //        CircleRunData run_crd = new CircleRunData(ball.GetPos(), ball.PredictPos(), ball.GetRadius());
+            //        for (int j = 0; j < balls.Count; j++)
+            //        {
+            //            var otherball = balls[j];
+            //            if (otherball == ball) continue;
+            //            FP _percent = 0;
+            //            CircleRunData static_crd = new CircleRunData(otherball.GetPos(), otherball.PredictPos(), otherball.GetRadius());
+            //            if (Detection.CheckCircle_CircleContact(run_crd, static_crd, ball.deltaTime, ref _percent))
+            //            {
+            //                fastHitBalls.Add(new fastHitBall(ball, otherball, _percent));
+            //            }
+            //        }
+
+            //        if (fastHitBalls.Count > 0)
+            //        {
+            //            CollectBallPairList(fastHitBalls);
+            //        }
+
+            //        #endregion
+            //        #region 边检测
+            //        FP t_percent = 0;
+
+            //        TSVector2 predictEndPos = ball.GetPos() + ball.GetMoveDir()*100;
+
+            //        //bool isflag = false;
+            //        List<BaseHit> fastedges = new List<BaseHit>();
+            //        //在当前速度下,预测圆最先和哪条边碰撞
+            //        for (int i = 0; i < tableEdges.Length; i++)
+            //        {
+            //            //if (Detection.CheckSegement_Contact(ball.cur_pos, predictEndPos, tableEdges[i].farstart, tableEdges[i].farend))//这个检测是去掉在挨着边但运动方向相反的情况
+            //            if(Detection.CheckCloseEdge(tableEdges[i].start,tableEdges[i].end,ball.GetPos(),predictEndPos))
+            //            {
+
+            //                if (Detection.CheckCircle_LineContact(tableEdges[i], run_crd, ref t_percent))
+            //                {
+            //                    fastedges.Add(new fastEdge(ball,tableEdges[i], t_percent));
+            //                }
+            //           }
+            //        }
+            //        //如果和边和球都有碰撞集合,找到最先的碰撞点
+            //        if (fastedges.Count > 0)
+            //        {
+            //            CollectBallPairList(fastedges);
+            //        }
+            //        fastHitBalls.Clear();
+            //        fastedges.Clear();
+            //    }
+            //    #endregion
+            //    if(ballPairHit.Count>0)
+            //        ProcessHitData();
+            //    else
+            //    {
+            //        //没有碰撞了,检查所有球是否有剩余时间，直接走完跳出
+            //        for (int i = 0; i < balls.Count; i++)
+            //        {
+            //            var nothitBall = balls[i];
+            //            if (nothitBall.deltaTime > 0)
+            //                nothitBall.UpdateBallPos(nothitBall.deltaTime);
+            //        }
+            //        break;
+            //    }
+            //}
+
+            FP leftSyncTime = _deltaTime;
+            while(true)
             {
                 testnumber++;
                 if (testnumber > 100)
                 {
-                    if(testnumber>200)
+                    if (testnumber > 200)
                     {
                         Debug.Log("防止死循环");
                         break;
                     }
                 }
-
-                for (int k = 0; k < balls.Count; k++)
+                List<BaseHit> baseHits = new List<BaseHit>();
+                FP _percent = 0;
+                for (int i =0;i<balls.Count-1;i++)
                 {
-                    var ball = balls[k];
-                    if (ball.deltaTime<=0)
-                        continue;
-                    var deltaTime = ball.deltaTime;//每个球的剩余的时长是不一样的
-                    List<BaseHit> fastHitBalls = new List<BaseHit>();
-                    #region 球碰撞检测
-                    CircleRunData run_crd = new CircleRunData(ball.GetPos(), ball.PredictPos(), ball.GetRadius());
-                    for (int j = 0; j < balls.Count; j++)
+                    var ball = balls[i];
+                    CircleRunData run_crd = new CircleRunData(ball.GetPos(), ball.PredictPos(leftSyncTime), ball.GetRadius());
+                    for (int j =i+1;j<balls.Count;j++)
                     {
                         var otherball = balls[j];
-                        if (otherball == ball) continue;
-                        FP _percent = 0;
-                        CircleRunData static_crd = new CircleRunData(otherball.GetPos(), otherball.PredictPos(), otherball.GetRadius());
+                        CircleRunData static_crd = new CircleRunData(otherball.GetPos(), otherball.PredictPos(leftSyncTime), otherball.GetRadius());
                         if (Detection.CheckCircle_CircleContact(run_crd, static_crd, ball.deltaTime, ref _percent))
                         {
-                            fastHitBalls.Add(new fastHitBall(ball, otherball, _percent));
+                            baseHits.Add(new fastHitBall(ball, otherball, _percent));
                         }
                     }
+                }
 
-                    if (fastHitBalls.Count > 0)
-                    {
-                        CollectBallPairList(fastHitBalls);
-                    }
-
-                    #endregion
-                    #region 边检测
-                    FP t_percent = 0;
-
-                    TSVector2 predictEndPos = ball.GetPos() + ball.GetMoveDir()*100;
-
-                    //bool isflag = false;
-                    List<BaseHit> fastedges = new List<BaseHit>();
+                for(int ii=0;ii<balls.Count;ii++)
+                {
+                    var ball = balls[ii];
+                    TSVector2 predictEndPos = ball.GetPos() + ball.GetMoveDir() * 100;
+                    CircleRunData run_crd = new CircleRunData(ball.GetPos(), ball.PredictPos(leftSyncTime), ball.GetRadius());
                     //在当前速度下,预测圆最先和哪条边碰撞
-                    for (int i = 0; i < tableEdges.Length; i++)
+                    for (int jj = 0; jj < tableEdges.Length; jj++)
                     {
                         //if (Detection.CheckSegement_Contact(ball.cur_pos, predictEndPos, tableEdges[i].farstart, tableEdges[i].farend))//这个检测是去掉在挨着边但运动方向相反的情况
-                        if(Detection.CheckCloseEdge(tableEdges[i].start,tableEdges[i].end,ball.GetPos(),predictEndPos))
+                        if (Detection.CheckCloseEdge(tableEdges[jj].start, tableEdges[jj].end, ball.GetPos(), predictEndPos))
                         {
 
-                            if (Detection.CheckCircle_LineContact(tableEdges[i], run_crd, ref t_percent))
+                            if (Detection.CheckCircle_LineContact(tableEdges[jj], run_crd, ref _percent))
                             {
-                                fastedges.Add(new fastEdge(ball,tableEdges[i], t_percent));
+                                baseHits.Add(new fastEdge(ball, tableEdges[jj], _percent));
                             }
-                       }
+                        }
                     }
-                    //如果和边和球都有碰撞集合,找到最先的碰撞点
-                    if (fastedges.Count > 0)
-                    {
-                        CollectBallPairList(fastedges);
-                    }
-                    fastHitBalls.Clear();
-                    fastedges.Clear();
                 }
-                #endregion
-                if(ballPairHit.Count>0)
-                    ProcessHitData();
+
+
+
+                if(baseHits.Count>0)
+                {
+                    var closedHit = baseHits.OrderBy((m) => m.t_percent).First() ;
+                    closedHit.TagProcess();
+                    var syncTime = closedHit.t_percent * leftSyncTime;
+                    leftSyncTime -= syncTime;
+                    if (leftSyncTime <= 0)
+                        leftSyncTime = 0;
+                    if (closedHit.hitType == HitType.Ball)
+                    {
+                        var _baseHit = closedHit as fastHitBall;
+                        //_baseHit.runballObj.CalBallPos(_baseHit.t_percent * _baseHit.runballObj.deltaTime);
+                        //_baseHit.staticballObj.CalBallPos(_baseHit.t_percent * _baseHit.staticballObj.deltaTime);
+                        updateDirAndTimeByBall(_baseHit.t_percent, _baseHit.runballObj, _baseHit.staticballObj, syncTime);
+                    }
+                    else if (closedHit.hitType == HitType.Edge)
+                    {
+                        var _baseHit = closedHit as fastEdge;
+                        //_baseHit.ball.CalBallPos(_baseHit.t_percent * _baseHit.ball.deltaTime);
+                        updateDirAndTimeByEdge(_baseHit.t_percent, _baseHit.tbe, _baseHit.ball, syncTime);
+                    }
+                    for (int m = 0; m < balls.Count; m++)
+                    {
+                        var nothitBall = balls[m];
+                        if (nothitBall.lockcheck==false)
+                            nothitBall.UpdateBallPos(syncTime);
+                    }
+                }
                 else
                 {
-                    //没有碰撞了,检查所有球是否有剩余时间，直接走完跳出
-                    for (int i = 0; i < balls.Count; i++)
+                    for (int n = 0; n < balls.Count; n++)
                     {
-                        var nothitBall = balls[i];
-                        if (nothitBall.deltaTime > 0)
-                            nothitBall.UpdateBallPos(nothitBall.deltaTime);
+                        var nothitBall = balls[n];
+                        //if (nothitBall.deltaTime > 0)
+                            nothitBall.UpdateBallPos(leftSyncTime);
                     }
                     break;
                 }
-            }
 
+                UnLockBalls();
+            }
             ClearTestData();
         }
 
@@ -509,13 +601,13 @@ namespace PoolEngine
                         var _baseHit = baseHit as fastHitBall;
                         _baseHit.runballObj.CalBallPos(_baseHit.t_percent * _baseHit.runballObj.deltaTime);
                         _baseHit.staticballObj.CalBallPos(_baseHit.t_percent * _baseHit.staticballObj.deltaTime);
-                        updateDirAndTimeByBall(_baseHit.t_percent, _baseHit.runballObj, _baseHit.staticballObj);
+                        //updateDirAndTimeByBall(_baseHit.t_percent, _baseHit.runballObj, _baseHit.staticballObj);
                     }
                     else if (baseHit.hitType == HitType.Edge)
                     {
                         var _baseHit = baseHit as fastEdge;
                         _baseHit.ball.CalBallPos(_baseHit.t_percent * _baseHit.ball.deltaTime);
-                        updateDirAndTimeByEdge(_baseHit.t_percent, _baseHit.tbe, _baseHit.ball);
+                        //updateDirAndTimeByEdge(_baseHit.t_percent, _baseHit.tbe, _baseHit.ball);
                     }
                 }
             }
