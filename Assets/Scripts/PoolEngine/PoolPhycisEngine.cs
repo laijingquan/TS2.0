@@ -57,9 +57,9 @@ namespace PoolEngine
             TSRandom.Init();
             FP halfx = TableWidth/2-2*radius;
             FP halfy = TableHeight / 2-2*radius;
-            for(int i =0;i<10;i++)
+            for(int i =0;i<20;i++)
             {
-                var ball = new BallObj(i, new TSVector2(TSRandom.Range((int)(-halfx), (int)halfx), TSRandom.Range((int)(-halfy), (int)halfy)), new TSVector2(TSRandom.Range(-1, 1), TSRandom.Range(-1, 1)).normalized, TSRandom.Range(100,200), radius);
+                var ball = new BallObj(i, new TSVector2(TSRandom.Range((int)(-halfx), (int)halfx), TSRandom.Range((int)(-halfy), (int)halfy)), new TSVector2(TSRandom.Range(-1, 1), TSRandom.Range(-1, 1)).normalized, TSRandom.Range(1,20), radius);
                 //var ball = new BallObj(i, new TSVector2(TSRandom.Range((int)(-halfx), (int)halfx), TSRandom.Range((int)(-halfy), (int)halfy)), radius);
                 balls.Add(ball);
                 if (ball.ID == 0)
