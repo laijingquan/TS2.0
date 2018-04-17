@@ -12,10 +12,21 @@ namespace PoolEngine
         public TSVector2 end;
         public TSVector2 farstart;
         public TSVector2 farend;
-        public tableEdge(TSVector2 _start, TSVector2 _end)
+        public TSVector2 farstart2;
+        public TSVector2 farend2;
+        public TSVector2 midPos;
+        public TSVector2 normal;
+        public TSVector2 edgeDir;
+        public int ID;
+        public tableEdge(TSVector2 _start, TSVector2 _end, int _ID=-1)
         {
+            ID = _ID;
             start = _start;
             end = _end;
+            edgeDir = end - start;
+            midPos = start+ edgeDir.normalized*edgeDir.magnitude/2;
+            var normal3D = (TSQuaternion.AngleAxis(90, TSVector.up) * new TSVector(edgeDir.x, 0, edgeDir.y).normalized);
+            normal = new TSVector2(normal3D.x,normal3D.z);
             var dir = end - start;
             farstart = start - dir * 100;
             farend = end + dir * 100;
@@ -203,13 +214,14 @@ namespace PoolEngine
             hitType = HitType.Edge;
         }
 
-        public void Init(BallObj _ball, tableEdge _tbe, FP _t_percent)
+        public void Init(BallObj _ball, tableEdge _tbe, FP _t_percent,TSVector2 _hitNormal)
         {
             ball = _ball;
             tbe = _tbe;
             t_percent = _t_percent;
             deltaTime = ball.deltaTime;
             hitType = HitType.Edge;
+            hitNormal = _hitNormal;
         }
 
         public override int GetMainBallID()
@@ -226,6 +238,7 @@ namespace PoolEngine
         }
         public BallObj ball;
         public tableEdge tbe;
+        public TSVector2 hitNormal;
         //public FP t_percent;
     }
 

@@ -39,7 +39,7 @@ namespace PoolEngine
             //ballrender = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             ballrender = GameObject.Instantiate(Resources.Load("Sphere") as GameObject);
             var text = ballrender.transform.FindChild("Text");
-            text.transform.GetComponent<TextMesh>().text = ""/*ID.ToString()*/;
+            text.transform.GetComponent<TextMesh>().text = ID.ToString();
             ballrender.name = ID.ToString();
             UpdateBallDraw();
         }
@@ -80,6 +80,8 @@ namespace PoolEngine
 
         public void UpdateMoveDir(TSVector2 dir)
         {
+            //if (dir.magnitude > 41)
+            //    Debug.Log("更新的速度过大,有问题哦");
             if (body != null)
                 moveDir = body.UpdateMoveDir(dir);
             else

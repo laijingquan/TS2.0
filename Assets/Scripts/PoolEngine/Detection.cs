@@ -148,7 +148,226 @@ namespace PoolEngine
         }
 
         /// <summary>
-        /// 圆和边的动态相交检测
+        /// 静态相交检测,主要是计算圆心到线段最近点的距离。
+        /// 圆心p(x, y), 半径r, 线段两端点p1(x1, y1)和p2(x2, y2)
+        /// </summary>
+        /// <returns></returns>
+        public static bool CheckCircle_SegementContact(TSVector2 cirPos,tableEdge segement,FP radius)
+        {
+            TSVector2 P1P = cirPos - segement.start;
+            TSVector2 P1P2 = segement.end - segement.start;
+            FP P2P2_len = P1P2.magnitude;
+            TSVector2 P1P2norm = P1P2.normalized;
+            FP u = TSVector2.Dot(P1P, P1P2norm);
+            TSVector2 nearestPos = TSVector2.zero;
+            // determine the nearest point on the lineseg  
+            FP x0 = 0;
+            FP y0 = 0;
+            if (u <= 0)
+            {
+                // p is on the left of p1, so p1 is the nearest point on lineseg  
+                nearestPos = segement.start;
+            }
+            else if (u >= P2P2_len)
+            {
+                // p is on the right of p2, so p2 is the nearest point on lineseg  
+                nearestPos = segement.end;
+            }
+            else
+            {
+                // p0 = p1 + v2 * u  
+                // note that v2 is already normalized.  
+                nearestPos = segement.start +  P1P2norm* u;
+            }
+            var dis = TSVector2.Distance(cirPos, nearestPos);
+            if (dis <= radius + FP.Epsilon)
+            {
+                return true;
+            }
+            else
+                return false;
+        }
+        /// <summary>
+        /// 检测圆是否和线段的端点相交,参考了俩个动态圆的动态相交测试,都是转化为射线和圆的相交测试
+        /// </summary>
+        /// <returns></returns>
+        public static bool _CheckCircle_tableEdgeEndContact(CircleRunData runCircle, TSVector2 endPos, ref FP _percent)
+        {
+            //TSVector2 cirPos = runCircle.cur_pos;
+            //TSVector2 VA = runCircle.next_pos - runCircle.cur_pos;
+            //TSVector2 VB = staticCircle.next_pos - staticCircle.cur_pos;
+            //两个运动方向描述为一方运动另一方静止 so
+            //TSVector2 VAB = VA - VB;//runCircle相对于staticCircle的运动方向pc
+            TSVector2 VAB = runCircle.next_pos - runCircle.cur_pos;//动态圆射线运动方向
+            TSVector2 Idir = endPos - runCircle.cur_pos;//射线起点到静态圆的方向
+            //FP Idir_length_square = TSVector2.Dot(Idir, Idir);
+            FP Idir_length_square = Idir.LengthSquared();
+            FP static_radius_square = runCircle.radius * runCircle.radius;
+
+            if (Idir_length_square < static_radius_square)//射线起点在圆心内部,相交
+            {
+                //_percent =  calHitInfo();
+                //_percent = 1;//一开始就相交的
+                //Debug.Log("射线起点在圆心内部");
+                return false;
+            }
+            else//射线起点在圆心外部的情况
+            {
+                FP a_projvalue = TSVector2.Dot(Idir, VAB.normalized);
+                if (a_projvalue < 0)//球体位于射线原点的后面 不相交
+                {
+                    return false;
+                }
+                else
+                {
+                    FP m_square = Idir_length_square - a_projvalue * a_projvalue;//球心到投影点距离的平方
+                    if (m_square - static_radius_square > 0) //预测不相交
+                    {
+                        return false;
+                    }
+                    else//有可能有交点，因为有可能距离不够
+                    {
+                        //var t = calHitInfo(Idir, a_projvalue);
+                        FP b_squar = m_square;
+                        FP f = TSMath.Sqrt(static_radius_square - b_squar);//理论上来说 f是开跟后的结果,应该有俩个值？
+                        FP t1 = a_projvalue - f;//碰撞到静态圆所走的路程，总路程是runCircle.cur_pos+VAB*delataTime;
+                        FP t2 = a_projvalue + f;
+                        FP per = 0;
+                        bool isFlag = false;
+                        if (t1 > 0 && t1 - VAB.magnitude < FP.EN8)
+                        {
+                            isFlag = true;
+                            if (VAB.magnitude < 0)
+                            {
+                                Debug.Log("除数不能为0");
+                            }
+                            per = t1 / VAB.magnitude;
+                        }
+
+                        if (t2 > 0 && t2 - VAB.magnitude < 0)
+                        {
+                            isFlag = true;
+                            if (VAB.magnitude < 0)
+                            {
+                                Debug.Log("除数不能为0");
+                            }
+                            var per2 = t2 / VAB.magnitude;
+                            if (per2 < per)
+                            {
+                                per = per2;
+                            }
+                        }
+                        _percent = per;
+                        if (_percent > 1)
+                        {
+                            Debug.Log("路程百分比大于1,注意!");
+                        }
+
+                        if (isFlag && _percent < FP.EN4)
+                            return false;
+                        return isFlag;
+                    }
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// 检测圆是否和线段的端点相交,参考了俩个动态圆的动态相交测试,都是转化为射线和圆的相交测试
+        /// </summary>
+        /// <returns></returns>
+        public static bool CheckCircle_tableEdgeEndContact(CircleRunData runCircle, tableEdge segement,ref FP _percent,ref TSVector2 _nearestPos)
+        {
+            TSVector2 cirPos = runCircle.cur_pos;
+            TSVector2 nearestPos = TSVector2.zero;
+            //先确定圆的起始位置离哪个端点最近
+            if(TSVector2.DistanceSquared(runCircle.cur_pos,segement.start)<TSVector2.DistanceSquared(runCircle.cur_pos,segement.end))
+            {
+                _nearestPos = nearestPos = segement.start;
+            }
+            else
+            {
+                _nearestPos = nearestPos = segement.end;
+            }
+            //TSVector2 VA = runCircle.next_pos - runCircle.cur_pos;
+            //TSVector2 VB = staticCircle.next_pos - staticCircle.cur_pos;
+            //两个运动方向描述为一方运动另一方静止 so
+            //TSVector2 VAB = VA - VB;//runCircle相对于staticCircle的运动方向pc
+            TSVector2 VAB = runCircle.next_pos - runCircle.cur_pos;//动态圆射线运动方向
+            TSVector2 Idir = nearestPos - cirPos;//射线起点到静态圆的方向
+            //FP Idir_length_square = TSVector2.Dot(Idir, Idir);
+            FP Idir_length_square = Idir.LengthSquared();
+            FP static_radius_square = runCircle.radius  * runCircle.radius ;
+
+            if (Idir_length_square < static_radius_square)//射线起点在圆心内部,相交
+            {
+                //_percent =  calHitInfo();
+                //_percent = 1;//一开始就相交的
+                //Debug.Log("射线起点在圆心内部");
+                return false;
+            }
+            else//射线起点在圆心外部的情况
+            {
+                FP a_projvalue = TSVector2.Dot(Idir, VAB.normalized);
+                if (a_projvalue < 0)//球体位于射线原点的后面 不相交
+                {
+                    return false;
+                }
+                else
+                {
+                    FP m_square = Idir_length_square - a_projvalue * a_projvalue;//球心到投影点距离的平方
+                    if (m_square - static_radius_square > 0) //预测不相交
+                    {
+                        return false;
+                    }
+                    else//有可能有交点，因为有可能距离不够
+                    {
+                        //var t = calHitInfo(Idir, a_projvalue);
+                        FP b_squar = m_square;
+                        FP f = TSMath.Sqrt(static_radius_square - b_squar);//理论上来说 f是开跟后的结果,应该有俩个值？
+                        FP t1 = a_projvalue - f;//碰撞到静态圆所走的路程，总路程是runCircle.cur_pos+VAB*delataTime;
+                        FP t2 = a_projvalue + f;
+                        FP per = 0;
+                        bool isFlag = false;
+                        if (t1 > 0 && t1 - VAB.magnitude < FP.EN8)
+                        {
+                            isFlag = true;
+                            if (VAB.magnitude < 0)
+                            {
+                                Debug.Log("除数不能为0");
+                            }
+                            per = t1 / VAB.magnitude;
+                        }
+
+                        if (t2 > 0 && t2 - VAB.magnitude < 0)
+                        {
+                            isFlag = true;
+                            if (VAB.magnitude < 0)
+                            {
+                                Debug.Log("除数不能为0");
+                            }
+                            var per2 = t2 / VAB.magnitude;
+                            if (per2 < per)
+                            {
+                                per = per2;
+                            }
+                        }
+                        _percent = per;
+                        if(_percent>1)
+                        {
+                            Debug.Log("路程百分比大于1,注意!");
+                        }
+
+                        if (isFlag && _percent < FP.EN4)
+                            return false;
+                        return isFlag;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 圆和边的平面动态相交检测（注意是边的平面 并不是线段）
         /// </summary>
         /// <param name="tedge"></param>
         /// <param name="crd"></param>
@@ -189,6 +408,18 @@ namespace PoolEngine
                 //TSVector2 sce = Sc - Se;
                 //FP S = TSMath.Sqrt( TSVector2.Dot(sce, sce));
                 t_percent = (Scnorm - crd.radius) / S;//圆心到达撞击点的距离/圆心经过的总距离 来求出时间占比
+                if (t_percent > 1)
+                {
+                    return false;
+                    Debug.Log("路程百分比大于1,注意!");
+                }
+                //if (t_percent < 0)
+                //{
+                //    if (Detection.CheckCircle_tableEdgeEndContact(crd, tedge, ref t_percent))
+                //    {
+                //        Debug.Log("修正");
+                //    }
+                //}
                 return t_percent>=0?true:false;
             }
         }
@@ -234,9 +465,27 @@ namespace PoolEngine
             TSVector2 HC = AC - ABnormal * TSMath.Abs(TSVector2.Dot(AC, ABnormal));
             TSVector2 HCnormal = TSVector2.Normalize(HC);
             FP VP = TSMath.Abs(TSVector2.Dot(V, HCnormal));
+            if(TSMath.Abs(VP)>10000)
+            {
+                Debug.Log("圆碰边速度过大");
+            }
             TSVector2 VF = V + HCnormal * VP * 2;//反射方向
             
             return VF;
+        }
+
+        /// <summary>
+        /// 更通用的圆和边碰撞,对端点的碰撞也能适用
+        /// </summary>
+        /// <param name="tedge"></param>
+        /// <param name="circlePos"></param>
+        /// <param name="radius"></param>
+        /// <param name="moveDir"></param>
+        /// <returns></returns>
+        public static TSVector2 CheckCircle_EdgeCollision(TSVector2 hitNormal, TSVector2 moveDir)
+        {
+            FP VP = TSVector2.Dot(moveDir, hitNormal);
+            return moveDir - hitNormal * VP + hitNormal * TSMath.Abs(VP);
         }
 
         #region 线段相交算法1
@@ -338,6 +587,20 @@ namespace PoolEngine
             var perpendicularA_next_pos = PointToLineDir(E1, E2, next_pos);
             var dotResult = TSVector2.Dot(perpendicular_cur_pos, perpendicularA_next_pos);
             if (perpendicularA_next_pos.magnitude < perpendicular_cur_pos.magnitude || dotResult<0)//靠近边的条件
+                return true;
+            return false;
+        }
+
+        /// <summary>
+        /// 当球的运动矢量和边的法线点积小于零，证明和该边可能产生碰撞
+        /// </summary>
+        /// <param name="segement"></param>
+        /// <param name="dir"></param>
+        /// <returns></returns>
+        public static bool CheckCloseSegement(tableEdge segement,TSVector2 dir)
+        {
+            FP result = TSVector2.Dot(dir,segement.normal);
+            if (result < 0)
                 return true;
             return false;
         }

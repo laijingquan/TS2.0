@@ -55,11 +55,11 @@ namespace PoolEngine
         void RandCreateBalls()
         {
             TSRandom.Init();
-            FP halfx = TableWidth/2-2*radius;
-            FP halfy = TableHeight / 2-2*radius;
+            FP halfx = TableWidth/2-2*radius-5;
+            FP halfy = TableHeight / 2-2*radius-5;
             for(int i =0;i<20;i++)
             {
-                var ball = new BallObj(i, new TSVector2(TSRandom.Range((int)(-halfx), (int)halfx), TSRandom.Range((int)(-halfy), (int)halfy)), new TSVector2(TSRandom.Range(-1, 1), TSRandom.Range(-1, 1)).normalized, TSRandom.Range(1,20), radius);
+                var ball = new BallObj(i, new TSVector2(TSRandom.Range((int)(-halfx), (int)halfx), TSRandom.Range((int)(-halfy), (int)halfy)), new TSVector2(TSRandom.Range(-1, 1), TSRandom.Range(-1, 1)).normalized, TSRandom.Range(10,100), radius);
                 //var ball = new BallObj(i, new TSVector2(TSRandom.Range((int)(-halfx), (int)halfx), TSRandom.Range((int)(-halfy), (int)halfy)), radius);
                 balls.Add(ball);
                 if (ball.ID == 0)
@@ -71,116 +71,153 @@ namespace PoolEngine
         {
             RandCreateBalls();
             return;
-            var ballObj = new BallObj(1, new TSVector2(0, 2), new TSVector2(0, -1).normalized,1,0.5);
+            var ballObj = new BallObj(1, new TSVector2(tableWidth/2+0.4, 0), new TSVector2(0, 1).normalized,1,0.5);
             balls.Add(ballObj);
 
-            ballObj = new BallObj(2, new TSVector2(-4, 0), new TSVector2(1, 0).normalized, 3, 0.5);
-            balls.Add(ballObj);
+            //ballObj = new BallObj(2, new TSVector2(-4, 0), new TSVector2(1, 0).normalized, 3, 0.5);
+            //balls.Add(ballObj);
 
-            ballObj = new BallObj(3, new TSVector2(4, 0), new TSVector2(-1, 0).normalized, 5, 0.5);
-            balls.Add(ballObj);
+            //ballObj = new BallObj(3, new TSVector2(4, 0), new TSVector2(-1, 0).normalized, 5, 0.5);
+            //balls.Add(ballObj);
 
-            ballObj = new BallObj(4, new TSVector2(2, 1), new TSVector2(-0.5, 0.3).normalized, 2, 0.5);
-            balls.Add(ballObj);
+            //ballObj = new BallObj(4, new TSVector2(2, 1), new TSVector2(-0.5, 0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
 
-            ballObj = new BallObj(5, new TSVector2(2, 1), new TSVector2(-0.5, 0.6).normalized, 2, 0.5);
-            balls.Add(ballObj);
+            //ballObj = new BallObj(5, new TSVector2(2, 1), new TSVector2(-0.5, 0.6).normalized, 2, 0.5);
+            //balls.Add(ballObj);
 
-            ballObj = new BallObj(6, new TSVector2(2, 1), new TSVector2(0.5, 0.3).normalized, 2, 0.5);
-            balls.Add(ballObj);
+            //ballObj = new BallObj(6, new TSVector2(2, 1), new TSVector2(0.5, 0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
 
-            ballObj = new BallObj(7, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            balls.Add(ballObj);
+            //ballObj = new BallObj(7, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
 
-            ballObj = new BallObj(8, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            balls.Add(ballObj);
+            //ballObj = new BallObj(8, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
 
-            ballObj = new BallObj(9, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            balls.Add(ballObj);
+            //ballObj = new BallObj(9, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
 
-            ballObj = new BallObj(10, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            balls.Add(ballObj);
+            //ballObj = new BallObj(10, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
 
-            ballObj = new BallObj(11, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            balls.Add(ballObj);
+            //ballObj = new BallObj(11, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
 
-            ballObj = new BallObj(12, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            balls.Add(ballObj);
+            //ballObj = new BallObj(12, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
 
-            ballObj = new BallObj(13, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            balls.Add(ballObj);
+            //ballObj = new BallObj(13, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
 
-            ballObj = new BallObj(14, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            balls.Add(ballObj);
+            //ballObj = new BallObj(14, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
 
-            ballObj = new BallObj(15, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            balls.Add(ballObj);
+            //ballObj = new BallObj(15, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
 
-            ballObj = new BallObj(16, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            balls.Add(ballObj);
+            //ballObj = new BallObj(16, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
 
-            ballObj = new BallObj(17, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            balls.Add(ballObj);
+            //ballObj = new BallObj(17, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
 
-            ballObj = new BallObj(18, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            balls.Add(ballObj);
+            //ballObj = new BallObj(18, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
 
-            ballObj = new BallObj(19, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            balls.Add(ballObj);
+            //ballObj = new BallObj(19, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
 
-            ballObj = new BallObj(20, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            balls.Add(ballObj);
+            //ballObj = new BallObj(20, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
 
-            ballObj = new BallObj(21, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            balls.Add(ballObj);
+            //ballObj = new BallObj(21, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
 
-            ballObj = new BallObj(22, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            balls.Add(ballObj);
+            //ballObj = new BallObj(22, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
 
-            ballObj = new BallObj(23, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            balls.Add(ballObj);
+            //ballObj = new BallObj(23, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
 
-            ballObj = new BallObj(24, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            balls.Add(ballObj);
-            ballObj = new BallObj(25, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            balls.Add(ballObj);
+            //ballObj = new BallObj(24, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
+            //ballObj = new BallObj(25, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
 
-            ballObj = new BallObj(26, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            balls.Add(ballObj);
-            ballObj = new BallObj(27, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            balls.Add(ballObj);
+            //ballObj = new BallObj(26, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
+            //ballObj = new BallObj(27, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
 
-            ballObj = new BallObj(28, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            balls.Add(ballObj);
-            ballObj = new BallObj(29, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            balls.Add(ballObj);
+            //ballObj = new BallObj(28, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
+            //ballObj = new BallObj(29, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
 
-            ballObj = new BallObj(30, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
-            balls.Add(ballObj);
+            //ballObj = new BallObj(30, new TSVector2(2, 1), new TSVector2(-0.5, -0.3).normalized, 2, 0.5);
+            //balls.Add(ballObj);
+        }
+        void CreateTable2()
+        {
+            int big = 99999;
+            tableWidth = 0;
+            tableHeight = 0;
+            int factor = 10;
+
+            FP[] edges = new FP[] {-1.39,0.46,-1.44,0.53,   -1.36,0.63,-1.31,0.59,  -0.08,0.59,-0.07,0.64,  0.07,0.64,0.08,0.59,    1.31,0.59,1.36,0.63,    1.44,0.53,1.39,0.46,
+                                                 1.39,-0.46,1.44,-0.53,1.36,    -0.63,1.31,-0.59,0.08,  -0.59,0.07,-0.64,-0.07, -0.64,-0.08,-0.59,-1.31,    -0.59,-1.36,-0.63,-1.44,    -0.53,-1.39,-0.46 ,-1.39,0.46};
+            for(int j =0,i=0;j<edges.Length-2;i++)
+            {
+                tableEdges.Add(new tableEdge(new TSVector2(edges[j]* factor, edges[j+1]* factor), new TSVector2(edges[j+2]* factor, edges[j+3]* factor),i));
+                var w = TSMath.Abs(edges[j] * factor);
+                var h = TSMath.Abs(edges[j + 1] * factor);
+                if (tableWidth<w)
+                {
+                    tableWidth = w;
+                }
+                if(tableHeight<h)
+                {
+                    tableHeight = h;
+                }
+                w = TSMath.Abs(edges[j+2] * factor);
+                h = TSMath.Abs(edges[j + 3] * factor);
+                if (tableWidth < w)
+                {
+                    tableWidth = w;
+                }
+                if (tableHeight < h)
+                {
+                    tableHeight = h;
+                }
+                j += 2;
+            }
+            tableWidth *= 2;
+            tableHeight *= 2;
         }
         void CreateTable()
         {
-
+            CreateTable2(); return;
             //上
             //tableEdges[0].start = new TSVector2(-tableWidth/2, tableHeight/2);
             //tableEdges[0].end = new TSVector2(tableWidth/2, tableHeight/2);
-            tableEdges[0] = new tableEdge(new TSVector2(-tableWidth / 2, tableHeight / 2), new TSVector2(tableWidth / 2, tableHeight / 2));
+            tableEdges.Add( new tableEdge(new TSVector2(-tableWidth / 2, tableHeight / 2), new TSVector2(tableWidth / 2, tableHeight / 2)));
 
 
             //下
             //tableEdges[1].start = new TSVector2(-tableWidth / 2, -tableHeight / 2);
             //tableEdges[1].end = new TSVector2(tableWidth / 2, -tableHeight / 2);
-            tableEdges[1] = new tableEdge(new TSVector2(-tableWidth / 2, -tableHeight / 2), new TSVector2(tableWidth / 2, -tableHeight / 2));
+            tableEdges.Add ( new tableEdge(new TSVector2(tableWidth / 2, -tableHeight / 2), new TSVector2(-tableWidth / 2, -tableHeight / 2)));
 
             //左
             //tableEdges[2].start = tableEdges[1].start;
             //tableEdges[2].end = tableEdges[0].start;
-            tableEdges[2] = new tableEdge(new TSVector2(-tableWidth / 2, -tableHeight / 2), new TSVector2(-tableWidth / 2, tableHeight / 2));
+            tableEdges.Add( new tableEdge(new TSVector2(-tableWidth / 2, -tableHeight / 2), new TSVector2(-tableWidth / 2, tableHeight / 2)));
 
             //右
             //tableEdges[3].start = tableEdges[1].end;
             //tableEdges[3].end = tableEdges[0].end;
-            tableEdges[3] = new tableEdge(new TSVector2(tableWidth / 2, -tableHeight / 2), new TSVector2(tableWidth / 2, tableHeight / 2));
+            tableEdges.Add(new tableEdge(new TSVector2(tableWidth / 2, tableHeight / 2), new TSVector2(tableWidth / 2, -tableHeight / 2)));
         }
 
         public void Shot(TSVector2 movedir)
@@ -246,12 +283,17 @@ namespace PoolEngine
             record.Clear();
         }
 
+        void _updateDirAndTimeByEdge(FP _percent, TSVector2 hitNormal, BallObj ball, FP _deltaTime)
+        {
+            ball.UpdateBallPos(_deltaTime * _percent);//先更新到撞击点
+            var curReflcDir = Detection.CheckCircle_EdgeCollision(hitNormal, ball.GetMoveDir());//计算碰撞响应
+            ball.UpdateMoveDir(curReflcDir);//更新实时方向
+        }
 
         void updateDirAndTimeByEdge(FP _percent, tableEdge _tbe, BallObj ball,FP _deltaTime)
         {
             ball.UpdateBallPos(_deltaTime * _percent);//先更新到撞击点
             var curReflcDir = Detection.CheckCircle_LineCollision(_tbe, ball.GetPos(), ball.GetRadius(), ball.GetMoveDir());//计算碰撞响应
-
             ball.UpdateMoveDir(curReflcDir);//更新实时方向
         }
         void updateDirAndTimeByBall(FP _percent,BallObj runball,BallObj staticball, FP _deltaTime)
@@ -296,88 +338,6 @@ namespace PoolEngine
                 ball.lockcheck = false;
             }
             testnumber = 0;
-            //while (true)
-            //{
-            //    testnumber++;
-            //    if (testnumber > 100)
-            //    {
-            //        if(testnumber>200)
-            //        {
-            //            Debug.Log("防止死循环");
-            //            break;
-            //        }
-            //    }
-
-            //    for (int k = 0; k < balls.Count; k++)
-            //    {
-            //        var ball = balls[k];
-            //        if (ball.deltaTime<=0)
-            //            continue;
-            //        var deltaTime = ball.deltaTime;//每个球的剩余的时长是不一样的
-            //        List<BaseHit> fastHitBalls = new List<BaseHit>();
-            //        #region 球碰撞检测
-            //        CircleRunData run_crd = new CircleRunData(ball.GetPos(), ball.PredictPos(), ball.GetRadius());
-            //        for (int j = 0; j < balls.Count; j++)
-            //        {
-            //            var otherball = balls[j];
-            //            if (otherball == ball) continue;
-            //            FP _percent = 0;
-            //            CircleRunData static_crd = new CircleRunData(otherball.GetPos(), otherball.PredictPos(), otherball.GetRadius());
-            //            if (Detection.CheckCircle_CircleContact(run_crd, static_crd, ball.deltaTime, ref _percent))
-            //            {
-            //                fastHitBalls.Add(new fastHitBall(ball, otherball, _percent));
-            //            }
-            //        }
-
-            //        if (fastHitBalls.Count > 0)
-            //        {
-            //            CollectBallPairList(fastHitBalls);
-            //        }
-
-            //        #endregion
-            //        #region 边检测
-            //        FP t_percent = 0;
-
-            //        TSVector2 predictEndPos = ball.GetPos() + ball.GetMoveDir()*100;
-
-            //        //bool isflag = false;
-            //        List<BaseHit> fastedges = new List<BaseHit>();
-            //        //在当前速度下,预测圆最先和哪条边碰撞
-            //        for (int i = 0; i < tableEdges.Length; i++)
-            //        {
-            //            //if (Detection.CheckSegement_Contact(ball.cur_pos, predictEndPos, tableEdges[i].farstart, tableEdges[i].farend))//这个检测是去掉在挨着边但运动方向相反的情况
-            //            if(Detection.CheckCloseEdge(tableEdges[i].start,tableEdges[i].end,ball.GetPos(),predictEndPos))
-            //            {
-
-            //                if (Detection.CheckCircle_LineContact(tableEdges[i], run_crd, ref t_percent))
-            //                {
-            //                    fastedges.Add(new fastEdge(ball,tableEdges[i], t_percent));
-            //                }
-            //           }
-            //        }
-            //        //如果和边和球都有碰撞集合,找到最先的碰撞点
-            //        if (fastedges.Count > 0)
-            //        {
-            //            CollectBallPairList(fastedges);
-            //        }
-            //        fastHitBalls.Clear();
-            //        fastedges.Clear();
-            //    }
-            //    #endregion
-            //    if(ballPairHit.Count>0)
-            //        ProcessHitData();
-            //    else
-            //    {
-            //        //没有碰撞了,检查所有球是否有剩余时间，直接走完跳出
-            //        for (int i = 0; i < balls.Count; i++)
-            //        {
-            //            var nothitBall = balls[i];
-            //            if (nothitBall.deltaTime > 0)
-            //                nothitBall.UpdateBallPos(nothitBall.deltaTime);
-            //        }
-            //        break;
-            //    }
-            //}
 
             FP leftSyncTime = _deltaTime;
             while(true)
@@ -424,20 +384,58 @@ namespace PoolEngine
                     CircleRunData run_crd = run_crdPool.New();
                     run_crd.Init(ball.GetPos(), ball.PredictPos(leftSyncTime), ball.GetRadius());
                     //在当前速度下,预测圆最先和哪条边碰撞
-                    for (int jj = 0; jj < tableEdges.Length; jj++)
+                    for (int jj = 0; jj < tableEdges.Count; jj++)
                     {
-                        //if (Detection.CheckSegement_Contact(ball.cur_pos, predictEndPos, tableEdges[i].farstart, tableEdges[i].farend))//这个检测是去掉在挨着边但运动方向相反的情况
-                        if (Detection.CheckCloseEdge(tableEdges[jj].start, tableEdges[jj].end, ball.GetPos(), predictEndPos))
+                        TSVector2 predictCirclePos = TSVector2.zero;
+                        if (Detection.CheckCloseSegement(tableEdges[jj],ball.moveDir))
+                        //if (Detection.CheckCloseEdge(tableEdges[jj].start, tableEdges[jj].end, ball.GetPos(), predictEndPos))
                         {
-
-                            if (Detection.CheckCircle_LineContact(tableEdges[jj], run_crd, ref _percent))
+                            //预测是否和边所在平面碰撞
+                            if (Detection.CheckCircle_LineContact(tableEdges[jj], run_crd, ref _percent) /*|| Detection.CheckCircle_tableEdgeEndContact(run_crd, tableEdges[jj], ref _percent)*/)
                             {
-                                var obj = fastEdgePool.New();
-                                obj.Init(ball, tableEdges[jj], _percent);
-                                baseHits.Add(obj);
-                                //baseHits.Add(new fastEdge(ball, tableEdges[jj], _percent));
+                                predictCirclePos = ball.PredictPos(leftSyncTime * _percent);
+                                if (Detection.CheckCircle_SegementContact(predictCirclePos, tableEdges[jj], ball.radius))//然后检测离真实线段最近的点是否符合要求
+                                {
+                                    var obj = fastEdgePool.New();
+                                    obj.Init(ball, tableEdges[jj], _percent, tableEdges[jj].normal);
+                                    baseHits.Add(obj);
+                                }
+                                else
+                                    _percent = 0;
+                            }
+                            else
+                            {
+                                //TSVector2 nearestPos = TSVector2.zero;
+                                //if(Detection.CheckCircle_tableEdgeEndContact(run_crd, tableEdges[jj], ref _percent,ref nearestPos))//检测是否和线段的端点产生了碰撞
                             }
                         }
+
+                        if (Detection._CheckCircle_tableEdgeEndContact(run_crd, tableEdges[jj].start, ref _percent))//检测是否和线段的左端点产生了碰撞
+                        {
+                            predictCirclePos = ball.PredictPos(leftSyncTime * _percent);
+                            if (Detection.CheckCircle_SegementContact(predictCirclePos, tableEdges[jj], ball.radius))//然后检测离真实线段最近的点是否符合要求
+                            {
+                                var obj = fastEdgePool.New();
+                                obj.Init(ball, tableEdges[jj], _percent, (predictCirclePos - tableEdges[jj].start).normalized);
+                                baseHits.Add(obj);
+                            }
+                            else
+                                _percent = 0;
+                        }
+                        else if (Detection._CheckCircle_tableEdgeEndContact(run_crd, tableEdges[jj].end, ref _percent))//检测是否和线段的右端点产生了碰撞
+                        {
+                            predictCirclePos = ball.PredictPos(leftSyncTime * _percent);
+                            if (Detection.CheckCircle_SegementContact(predictCirclePos, tableEdges[jj], ball.radius))//然后检测离真实线段最近的点是否符合要求
+                            {
+                                var obj = fastEdgePool.New();
+                                obj.Init(ball, tableEdges[jj], _percent, (predictCirclePos - tableEdges[jj].end).normalized);
+                                baseHits.Add(obj);
+                            }
+                            else
+                                _percent = 0;
+                        }
+                        else
+                            _percent = 0;
                     }
                 }
 
@@ -462,7 +460,8 @@ namespace PoolEngine
                     {
                         var _baseHit = closedHit as fastEdge;
                         //_baseHit.ball.CalBallPos(_baseHit.t_percent * _baseHit.ball.deltaTime);
-                        updateDirAndTimeByEdge(_baseHit.t_percent, _baseHit.tbe, _baseHit.ball, syncTime);
+                        //updateDirAndTimeByEdge(_baseHit.t_percent, _baseHit.tbe, _baseHit.ball, syncTime);
+                        _updateDirAndTimeByEdge(_baseHit.t_percent, _baseHit.hitNormal, _baseHit.ball, syncTime);
                     }
                     for (int m = 0; m < balls.Count; m++)
                     {
@@ -662,10 +661,11 @@ namespace PoolEngine
         #region 数据
         private int step = 0;
         private bool debug = false;
-        private tableEdge[] tableEdges = new tableEdge[4];
-        private  FP tableWidth = 10;
-        private   FP tableHeight = 5;
+        private List<tableEdge> tableEdges = new List<tableEdge>();
+        private  FP tableWidth = 30;
+        private   FP tableHeight = 15;
         private FP radius = 0.5;
+        private FP ballMaxSpeed = 20;
         private BallObj mainBall;
         private List<BallObj> balls = new List<BallObj>();
         private Dictionary<int, BallObj> ballsDict = new Dictionary<int, BallObj>();
@@ -701,7 +701,7 @@ namespace PoolEngine
         }
 
 
-        public tableEdge[] TableEdges
+        public List<tableEdge> TableEdges
         {
             get
             {
